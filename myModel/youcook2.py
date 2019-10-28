@@ -232,7 +232,7 @@ class MPrpDataSet(data.Dataset):
             img_paths.append(img_path)
             
             # get box info
-            box_path = os.path.join(img_path.split('.')[0], '.txt')
+            box_path = img_path.split('.')[0] + ".txt"
             DetectBox_path.append(box_path)
             with open(box_path, 'rb') as handle:
                 info = pickle.load(handle)
