@@ -239,9 +239,10 @@ class MPrpDataSet(data.Dataset):
                 info = pickle.load(handle)
                 print(info)
                 if len(info) > 0:
-                    DetectBox_class.append(info[0][0])
-                    DetectBox_score.append(info[0][1])
-                    DetectBox.append(info[0][2])
+                    for eachinfo in info
+                    DetectBox_class.append(eachinfo[0])
+                    DetectBox_score.append(eachinfo[1])
+                    DetectBox.append(eachinfo[2])
 
             # transfer to blob (batch, 3, h, w)
             # preclude the condition that no entity in such action
