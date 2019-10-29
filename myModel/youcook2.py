@@ -233,12 +233,14 @@ class MPrpDataSet(data.Dataset):
             
             # get box info
             box_path = img_path.split('.')[0] + ".txt"
+            print("loading ", box_path)
             DetectBox_path.append(box_path)
             with open(box_path, 'rb') as handle:
                 info = pickle.load(handle)
-                DetectBox_class.append(info[0])
-                DetectBox_score.append(info[1])
-                DetectBox.append(info[2])
+                print(info)
+                DetectBox_class.append(info[0][0])
+                DetectBox_score.append(info[0][1])
+                DetectBox.append(info[0][2])
 
             # transfer to blob (batch, 3, h, w)
             # preclude the condition that no entity in such action
