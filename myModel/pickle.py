@@ -7,10 +7,10 @@ import argparse
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--img_dir', type=str, help='the image directory')
+	parser = argparse.ArgumentParser()
+	parser.add_argument('--img_dir', type=str, help='the image directory')
 	args = parser.parse_args()
 
-	with open(args.img_dir, 'rb') as handle:
+	with open(os.path.join('~/Grounding/Jing/NAFAE-master', args.img_dir), 'rb') as handle:
 		b = pickle.load(handle)
 	print(b)
