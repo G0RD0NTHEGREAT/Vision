@@ -513,7 +513,7 @@ if __name__ == "__main__":
                     default=['category'], type=list)
     parser.add_argument('--phase', dest='phase',
                         help='phase: train, test, val',
-                        default='val',
+                        default='train',
                         choices=['train', 'val', 'test'], type=str)
 
     args = parser.parse_args()
