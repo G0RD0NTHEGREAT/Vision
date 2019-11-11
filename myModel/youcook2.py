@@ -243,9 +243,9 @@ class MPrpDataSet(data.Dataset):
                 temp_box = []
                 if len(info) > 0:
                     for eachinfo in info:
-                        temp_class.add(eachinfo[0])
-                        temp_score.add(eachinfo[1])
-                        temp_box.add(eachinfo[2])
+                        temp_class.extend(eachinfo[0])
+                        temp_score.extend(eachinfo[1])
+                        temp_box.extend(eachinfo[2])
                 
                 DetectBox_class.append(temp_class)
                 DetectBox_score.append(temp_score)
