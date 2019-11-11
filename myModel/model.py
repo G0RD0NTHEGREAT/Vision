@@ -514,19 +514,19 @@ class DVSA(torch.nn.Module):
         self.Na = self.args.batch_size_val
         self.phase = 'eval'
 
-    def forward(self, vis_feats, word_feats, entities_length):
+    def forward(self, vis_feats, word_feats, entities_length, ):
         """ Process EM part in video level
         :param: vis_feats (Nax100, 512)
         :param: word_feats (NaxNe, 512)
         """
-        # Na: action number (segment number)
+        # Na: action number (segment number). 
         Na = self.Na
-        # Nb: number for box in each frame
+        # Nb: number for box in each frame. 
         Nb = cfg.TEST.RPN_POST_NMS_TOP_N
-        # Ne: maximum number of entity in an action
+        # Ne: maximum number of entity in an action. 
         # Ne = max(entities_length)
         Ne = self.args.max_ent_len
-        # Ns: sample number for each segment
+        # Ns: sample number for each segment. 
         Ns = int(vis_feats.size()[0]/Na/Nb)
         # division vector: (Na,)
         div_vec = torch.tensor([self.zero2one(i) for i in entities_length], dtype=torch.float).to(device)
@@ -680,8 +680,9 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
     batch_prev = time.time()
     RCNN_time = 0
     batch_time = 0
-
-    for batch_ind, (im_blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, im_paths, img_ids) in enumerate(train_loader):
+    for batch_ind, (blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, img_paths, img_ids, DetectBox_path, DetectBox_class, DetectBox_score, DetectBox) in enumerate(train_loader):
+    
+    #for batch_ind, (im_blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, im_paths, img_ids) in enumerate(train_loader):
         if max(entities_length) == 0:
             continue
         """Process visual feature""" 
