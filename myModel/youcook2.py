@@ -243,9 +243,9 @@ class MPrpDataSet(data.Dataset):
                 temp_box = []
                 if len(info) > 0:
                     for eachinfo in info:
-                        temp_class.extend(eachinfo[0])
-                        temp_score.extend(eachinfo[1])
-                        temp_box.extend(eachinfo[2])
+                        temp_class.append(eachinfo[0])
+                        temp_score.append(eachinfo[1])
+                        temp_box.append(eachinfo[2])
                 
                 DetectBox_class.append(temp_class)
                 DetectBox_score.append(temp_score)
@@ -326,10 +326,10 @@ class MPrpDataSet(data.Dataset):
                 img_ids.extend([self.img_id_mapping(img_path) for img_path in data[2]])
                 rl_seg_inds.append(data[5])
 
-                DetectBox_path.append(data[6])
-                DetectBox_class.append(data[7])
-                DetectBox_score.append(data[8])
-                DetectBox.append(data[9])
+                DetectBox_path.extend(data[6])
+                DetectBox_class.extend(data[7])
+                DetectBox_score.extend(data[8])
+                DetectBox.extend(data[9])
 
         elif len(self.entity_type) == 2:
             for i, data in enumerate(datas):
@@ -344,10 +344,10 @@ class MPrpDataSet(data.Dataset):
                 img_ids.extend([self.img_id_mapping(img_path) for img_path in data[3]])
                 rl_seg_inds.append(data[6])
 
-                DetectBox_path.append(data[7])
-                DetectBox_class.append(data[8])
-                DetectBox_score.append(data[9])
-                DetectBox.append(data[10])
+                DetectBox_path.extend(data[7])
+                DetectBox_class.extend(data[8])
+                DetectBox_score.extend(data[9])
+                DetectBox.extend(data[10])
             
         frm_length = [len(blob) for blob in blobs]
         blobs = np.concatenate(blobs, 0)
