@@ -233,11 +233,11 @@ class MPrpDataSet(data.Dataset):
             
             # get box info
             box_path = img_path.split('.')[0] + ".txt"
-            print("loading ", box_path)
+            #print("loading ", box_path)
             DetectBox_path.append(box_path)
             with open(box_path, 'rb') as handle:
                 info = pickle.load(handle)
-                print(info)
+                #print(info)
                 temp_class = []
                 temp_score = []
                 temp_box = []

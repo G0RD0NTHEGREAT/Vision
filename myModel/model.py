@@ -762,14 +762,14 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
         #     DetectBox_class_array[i][0:len(j)] = j
         # Detector_class_tensor = torch.from_numpy(DetectBox_class_array.copy()).to(device)
 
-        DetectBox_score_array = DetectBox_class_array = np.zeros([len(DetectBox_score), max([(len(x)) for x in DetectBox_score])], dtype=np.float32)
+        DetectBox_score_array = np.zeros([len(DetectBox_score), max([(len(x)) for x in DetectBox_score])], dtype=np.float32)
         for i,j in enumerate(DetectBox_score):
             DetectBox_score_array[i][0:len(j)] = j
         DetectBox_score_tensor = torch.from_numpy(DetectBox_score_array.copy()).to(device)
 
-        DetectBox_array = DetectBox_array = np.zeros([len(DetectBox_score), max([(len(x)) for x in DetectBox])], dtype=np.float32)
+        DetectBox_array = np.zeros([len(DetectBox), max([(len(x)) for x in DetectBox])], dtype=np.float32)
         for i,j in enumerate(DetectBox):
-            DetectBox_score_array[i][0:len(j)] = j
+            DetectBox_array[i][0:len(j)] = j
         DetectBox_tensor = torch.from_numpy(DetectBox_array.copy()).to(device)
 
 
