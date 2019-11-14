@@ -595,7 +595,7 @@ class DVSA(torch.nn.Module):
 
         detector_word_feats = detector_word_feats / (detector_word_feats.norm(dim=2).unsqueeze(2)+EPS)
         word_feats = word_feats.view(Na, Ne, 512).permute(0, 2, 1) # (Na, 512, Ne)
-        word_feats = word_feats / (word_feats.norm(dim=1).unsqueeze(2)+ EPS)
+        word_feats = word_feats / (word_feats.norm(dim=1).unsqueeze(1)+ EPS)
         sim_mat = detector_word_feats @ word_feats # (Na, Ns*maxlen, Ne)
 
         maxSim = torch.zeros(Na, Ns, Ne).to(device)
