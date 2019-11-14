@@ -558,33 +558,9 @@ class DVSA(torch.nn.Module):
         # 1. K (knowledge distance from query and class(from Detector))
         maxLen = max([(len(x)) for x in DetectBox_class])
         Knowledge_sim = np.zeros([len(DetectBox_class), maxLen], dtype=np.float32)
-        # Knowledge_sim = np.zeros((len(DetectBox_class), maxLen, args.glove_dim), dtype=np.float32)
-        
-        # # glove_feats (Na, Ne, 200)
-        # glove_feats = torch.zeros(Na, Ne, args.glove_dim)
-        # glove_feats = glove_feats.clone()
-        # # entity point
-        # ent_p = 0
 
-        # for act_ind, entity_length in enumerate(entities_length):
-        #     for ent_ind in range(entity_length):
-        #         entity = entities[ent_p]
-        #         if not entity:
-        #             continue
-        #         elif entity in glove.stoi.keys():
-        #             glove_feats[act_ind, ent_ind] = get_word(glove, entity)
-        #         else:
-        #             glove_feats[act_ind, ent_ind] = torch.zeros(args.glove_dim)
-        #             raise Exception('{} is not in glove vocabulary'.format(entity))
-        #         ent_p += 1
-        # # glove_feats (NaxNe, 200)
-        # glove_feats = glove_feats.view(-1, args.glove_dim)
-        # glove_feats = glove_feats.to(device)
-        # # word_feats (NaxNe, 512)
-        # word_feats = ground_model.word_ebd(glove_feats)
         print("getting glove_feats for detector word")
-        # glove_feats = torch.zeros(Na, Ne, args.glove_dim)
-        # glove_feats = glove_feats.clone()
+
 
         detector_word_glove = torch.zeros(len(DetectBox_class), maxLen, args.glove_dim)
         detector_word_glove = detector_word_glove.clone()
@@ -594,19 +570,30 @@ class DVSA(torch.nn.Module):
         for na in range (len(DetectBox_class)):
             for word_ind in range(len(DetectBox_class[na])):
                 entity = DetectBox_class[na][word_ind]
-                print('{} is printed in {}'.format(entity,DetectBox_class[na]))
+                # print('{} is printed in {}'.format(entity,DetectBox_class[na]))
                 if entity in glove.stoi.keys():
                     detector_word_glove[na][word_ind] = get_word(glove, entity)
                 else:
                     detector_word_glove[na][word_ind] = torch.zeros(args.glove_dim)
-                    print('{} is not in glove vocabulary'.format(entity))
+                    # print('{} is not in glove vocabulary'.format(entity))
                     # raise Exception('{} is not in glove vocabulary'.format(entity))
                 ent_p += 1
         # detector_word_glove ( Na*Ns, maxLen, 200)
         detector_word_glove = detector_word_glove.view(-1, args.glove_dim)
         detector_word_glove = detector_word_glove.to(device)
-        # word_feats (Na*Ns, 512)
+        # detector_word_feats (Na*Ns, maxLen, 512)
         detector_word_feats = ground_model.word_ebd(detector_word_glove)
+        # word_feats (NaxNe, 512)
+
+        # Knowledge_sim (Na*Ne*Ns, maxLen)
+        detector_word_feats = detector_word_feats.view(Na, Ns*maxLen, 512)
+        
+        word_feats = word_feats.view(Na, Ne, 512).permute(0, 2, 1) # (Na, 512, Ne)
+        
+        sim_mat = detector_word_feats @ word_feats # (Na, Ns*maxlen, Ne)
+
+        # sim_mat = sim_mat/
+
 
 
         #
