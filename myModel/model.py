@@ -585,6 +585,7 @@ class DVSA(torch.nn.Module):
         detector_word_feats = ground_model.word_ebd(detector_word_glove)
         # word_feats (NaxNe, 512)
 
+        print('Na: {}, Ne: {}, detector_word_feats: '.format(Na, Ne, detector_word_feats.size()))
         # detector_word_feats (Na,Ns*maxLen, 512)
         detector_word_feats = detector_word_feats.view(Na, Ns*maxLen, 512)
         detector_word_feats = detector_word_feats / max(detector_word_feats.norm(dim=2),EPS)
