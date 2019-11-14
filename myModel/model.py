@@ -601,9 +601,15 @@ class DVSA(torch.nn.Module):
         maxSim = torch.zeros(Na, Ns, Ne).to(device)
         maxSim = sim_mat.view(Na,Ns,maxLen,Ne).argmax(dim=2)    # (Na, Ns, Ne) with index
 
+
+
         for a in range(Na):
             for s in range(Ns):
                 for e in range(Ne):
+                    print('a: {}, s: {}, e: {}'.format(a,s,e))
+                    print('lenth of DetectBox_score is : {}'.format(len(DetectBox_score)))
+                    print('index of maxSim[a,s,e] is : {}'.format(maxSim[a,s,e]))
+                    print('length of DetectBox_score[a*s] is '.format(len(DetectBox_score[a*s])))
                     score = DetectBox_score[a*s][maxSim[a,s,e]]
                     word = DetectBox_class[a*s][maxSim[a,s,e]]
                     print('Max similarity score for Action {} Frame {} Entity {} is {} ({})'
