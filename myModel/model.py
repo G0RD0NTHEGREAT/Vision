@@ -585,15 +585,26 @@ class DVSA(torch.nn.Module):
         detector_word_feats = ground_model.word_ebd(detector_word_glove)
         # word_feats (NaxNe, 512)
 
-        # Knowledge_sim (Na*Ne*Ns, maxLen)
+        # detector_word_feats (Na,Ns*maxLen, 512)
         detector_word_feats = detector_word_feats.view(Na, Ns*maxLen, 512)
-        
+        detector_word_feats = detector_word_feats / max(detector_word_feats.norm(dim=2),EPS)
         word_feats = word_feats.view(Na, Ne, 512).permute(0, 2, 1) # (Na, 512, Ne)
-        
+        word_feats = word_feats / max(word_feats.norm(dim=1), EPS)
         sim_mat = detector_word_feats @ word_feats # (Na, Ns*maxlen, Ne)
 
-        # sim_mat = sim_mat/
+        maxSim = torch.zeros(Na, Ns, Ne).to(device)
+        maxSim = sim_mat.view(Na,Ns,maxlen,Ne).argmax(dim=2)    # (Na, Ns, Ne) with index
 
+        for a in range(Na):
+            for s in range(Ns):
+                for e in range(Ne):
+                    score = DetectBox_score[a*s][maxSim[a,s,e]]
+                    word = DetectBox_class[a*s][maxSim[a,s,e]]
+                    print('Max similarity score for Action {} Frame {} Entity {} is {} ({})'
+                          .format(a,s,e,score,word))
+                    maxSim[a,s,e] = score
+            
+            
 
 
         #
