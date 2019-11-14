@@ -757,10 +757,10 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
         Process Detection box
         """
         maxLen = max([(len(x)) for x in DetectBox_class])
-        DetectBox_class_array = np.zeros([len(DetectBox_class), maxLen], dtype=np.float32)
-        for i,j in enumerate(DetectBox_class):
-            DetectBox_class_array[i][0:len(j)] = j
-        Detector_class_tensor = torch.from_numpy(DetectBox_class_array.copy()).to(device)
+        # DetectBox_class_array = np.zeros([len(DetectBox_class), maxLen], dtype=np.float32)
+        # for i,j in enumerate(DetectBox_class):
+        #     DetectBox_class_array[i][0:len(j)] = j
+        # Detector_class_tensor = torch.from_numpy(DetectBox_class_array.copy()).to(device)
 
         DetectBox_score_array = DetectBox_class_array = np.zeros([len(DetectBox_score), max([(len(x)) for x in DetectBox_score])], dtype=np.float32)
         for i,j in enumerate(DetectBox_score):
