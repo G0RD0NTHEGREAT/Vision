@@ -583,7 +583,10 @@ class DVSA(torch.nn.Module):
         # # word_feats (NaxNe, 512)
         # word_feats = ground_model.word_ebd(glove_feats)
         print("getting glove_feats for detector word")
-        detector_word_glove = np.zeros((len(DetectBox_class), maxLen, args.glove_dim), dtype=np.float32)
+        # glove_feats = torch.zeros(Na, Ne, args.glove_dim)
+        # glove_feats = glove_feats.clone()
+        
+        detector_word_glove = torch.zeros((len(DetectBox_class), maxLen, args.glove_dim), dtype=np.float32)
         detector_word_glove = detector_word_glove.clone()
         # entity point
         ent_p = 0
