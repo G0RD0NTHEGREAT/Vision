@@ -585,8 +585,8 @@ class DVSA(torch.nn.Module):
         print("getting glove_feats for detector word")
         # glove_feats = torch.zeros(Na, Ne, args.glove_dim)
         # glove_feats = glove_feats.clone()
-        
-        detector_word_glove = torch.zeros((len(DetectBox_class), maxLen, args.glove_dim), dtype=np.float32)
+
+        detector_word_glove = torch.zeros(len(DetectBox_class), maxLen, args.glove_dim)
         detector_word_glove = detector_word_glove.clone()
         # entity point
         ent_p = 0
