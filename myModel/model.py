@@ -15,7 +15,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchtext.vocab as vocab
-from datasets.youcook2 import MPrpDataSet, SubsetSampler, MPrpBatchSampler
+from datasets.myYoucook2 import MPrpDataSet, SubsetSampler, MPrpBatchSampler
 from datasets.youcook_eval import parse_gt, evaluate_phrase, evaluate_box
 from model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
 from model.utils.net_utils import save_net, load_net, vis_detections, vis_grounds, vis_box_order, vis_single_det, vis_det
