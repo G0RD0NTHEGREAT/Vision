@@ -776,6 +776,8 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
         DetectBox_array = np.zeros([len(DetectBox), max([(len(x)) for x in DetectBox]), 4], dtype=np.float32)
         for i,j in enumerate(DetectBox):
             #print(j)
+            if len(j) == 0:
+                continue
             DetectBox_array[i][0:len(j)][:] = j
         DetectBox_tensor = torch.from_numpy(DetectBox_array.copy()).to(device)
 
