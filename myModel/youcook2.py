@@ -243,7 +243,7 @@ class MPrpDataSet(data.Dataset):
                 temp_box = []
                 if len(info) > 0:
                     for eachinfo in info:
-                        temp_class.append(eachinfo[0])
+                        temp_class.append(eachinfo[0].lower())
                         temp_score.append(eachinfo[1])
                         temp_box.append(eachinfo[2])
                 
