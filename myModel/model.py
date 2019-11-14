@@ -585,13 +585,13 @@ class DVSA(torch.nn.Module):
         detector_word_feats = ground_model.word_ebd(detector_word_glove)
         # word_feats (NaxNe, 512)
 
-        print('Na: {}, Ns: {}, maxLen{} detector_word_feats:{} '.format(Na, Ns, maxLen, detector_word_feats.size()))
+        # print('Na: {}, Ns: {}, maxLen{} detector_word_feats:{} '.format(Na, Ns, maxLen, detector_word_feats.size()))
         # detector_word_feats (Na,Ns*maxLen, 512)
         detector_word_feats = detector_word_feats.view(Na, Ns*maxLen, 512)
-        print('detector_word_feats:{} '.format(detector_word_feats.size()))
-        print('detector_word_feats.norm(dim=2)[:,None]]:{} '.format(detector_word_feats.norm(dim=2)[:,None].size()))
+        # print('detector_word_feats:{} '.format(detector_word_feats.size()))
+        # print('detector_word_feats.norm(dim=2)[:,None]]:{} '.format(detector_word_feats.norm(dim=2)[:,None].size()))
 
-        print('detector_word_feats.norm(dim=2).unsqueeze(2):{} '.format(detector_word_feats.norm(dim=2).unsqueeze(2).size()))
+        # print('detector_word_feats.norm(dim=2).unsqueeze(2):{} '.format(detector_word_feats.norm(dim=2).unsqueeze(2).size()))
 
         detector_word_feats = detector_word_feats / (detector_word_feats.norm(dim=2).unsqueeze(2)+EPS)
         word_feats = word_feats.view(Na, Ne, 512).permute(0, 2, 1) # (Na, 512, Ne)
@@ -599,7 +599,7 @@ class DVSA(torch.nn.Module):
         sim_mat = detector_word_feats @ word_feats # (Na, Ns*maxlen, Ne)
 
         maxSim = torch.zeros(Na, Ns, Ne).to(device)
-        maxSim = sim_mat.view(Na,Ns,maxlen,Ne).argmax(dim=2)    # (Na, Ns, Ne) with index
+        maxSim = sim_mat.view(Na,Ns,maxLen,Ne).argmax(dim=2)    # (Na, Ns, Ne) with index
 
         for a in range(Na):
             for s in range(Ns):
