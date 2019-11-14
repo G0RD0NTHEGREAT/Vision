@@ -591,7 +591,7 @@ class DVSA(torch.nn.Module):
         for na in range (len(DetectBox_class)):
             for word_ind in range(len(DetectBox_class[na])):
                 entity = DetectBox_class[na][word_ind]
-                print(entity)
+                print('{} is printed in {}'.format(entity,DetectBox_class[na]))
                 if entity in glove.stoi.keys():
                     detector_word_glove[na][word_ind] = get_word(glove, entity)
                 else:
