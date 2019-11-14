@@ -514,22 +514,25 @@ class DVSA(torch.nn.Module):
         self.Na = self.args.batch_size_val
         self.phase = 'eval'
 
-    def forward(self, vis_feats, word_feats, entities_length, ):
+    def forward(self, boxes, vis_feats, word_feats, entities_length, DetectBox_class, DetectBox_score, DetectBox):
         """ Process EM part in video level
         :param: vis_feats (Nax100, 512)
+        :param: boxes (batch(Na), num_boxes(100), 4)
         :param: word_feats (NaxNe, 512)
         """
-        # Na: action number (segment number). 
-        Na = self.Na
-        # Nb: number for box in each frame. 
-        Nb = cfg.TEST.RPN_POST_NMS_TOP_N
+        # Na: action number (segment number).           
+        Na = self.Na                                #How many Segment (batchsize)
+        # Nb: number for box in each frame.             
+        Nb = cfg.TEST.RPN_POST_NMS_TOP_N            #How many region for each frame      
         # Ne: maximum number of entity in an action. 
         # Ne = max(entities_length)
-        Ne = self.args.max_ent_len
-        # Ns: sample number for each segment. 
-        Ns = int(vis_feats.size()[0]/Na/Nb)
+        Ne = self.args.max_ent_len                  #How many query in the question
+        # Ns: sample number for each segment.           
+        Ns = int(vis_feats.size()[0]/Na/Nb)         #How many sample from a video segment (5 sample)
         # division vector: (Na,)
         div_vec = torch.tensor([self.zero2one(i) for i in entities_length], dtype=torch.float).to(device)
+
+
         # S_mask: (NaxNsxNb, Na, Ne)
         S_mask = np.zeros((Na*Ns*Nb, Na, Ne))
         for act_ind, entity_length in enumerate(entities_length):
@@ -549,6 +552,64 @@ class DVSA(torch.nn.Module):
 
         # S_mask: (NaxNsxNb, Na*Ne)
         S_.masked_fill_(S_mask, 0)
+
+
+        #******************Knowledge Part*************
+        # 1. K (knowledge distance from query and class(from Detector))
+        maxLen = max([(len(x)) for x in DetectBox_class])
+        Knowledge_sim = np.zeros([len(DetectBox_class), maxLen], dtype=np.float32)
+        # Knowledge_sim = np.zeros((len(DetectBox_class), maxLen, args.glove_dim), dtype=np.float32)
+        
+        # # glove_feats (Na, Ne, 200)
+        # glove_feats = torch.zeros(Na, Ne, args.glove_dim)
+        # glove_feats = glove_feats.clone()
+        # # entity point
+        # ent_p = 0
+
+        # for act_ind, entity_length in enumerate(entities_length):
+        #     for ent_ind in range(entity_length):
+        #         entity = entities[ent_p]
+        #         if not entity:
+        #             continue
+        #         elif entity in glove.stoi.keys():
+        #             glove_feats[act_ind, ent_ind] = get_word(glove, entity)
+        #         else:
+        #             glove_feats[act_ind, ent_ind] = torch.zeros(args.glove_dim)
+        #             raise Exception('{} is not in glove vocabulary'.format(entity))
+        #         ent_p += 1
+        # # glove_feats (NaxNe, 200)
+        # glove_feats = glove_feats.view(-1, args.glove_dim)
+        # glove_feats = glove_feats.to(device)
+        # # word_feats (NaxNe, 512)
+        # word_feats = ground_model.word_ebd(glove_feats)
+
+        detector_word_glove = np.zeros((len(DetectBox_class), maxLen, args.glove_dim), dtype=np.float32)
+        detector_word_glove = detector_word_glove.clone()
+        # entity point
+        ent_p = 0
+
+        for na in range (len(DetectBox_class)):
+            for word_ind in range(len(DetectBox_class[na])):
+                entity = DetectBox_class[na][word_ind]
+                print(entity)
+                if entity in glove.stoi.keys():
+                    detector_word_glove[na][word_ind] = get_word(glove, entity)
+                else:
+                    detector_word_glove[na][word_ind] = torch.zeros(args.glove_dim)
+                    raise Exception('{} is not in glove vocabulary'.format(entity))
+                ent_p += 1
+        # detector_word_glove ( Na*Ns, maxLen, 200)
+        detector_word_glove = detector_word_glove.view(-1, args.glove_dim)
+        detector_word_glove = detector_word_glove.to(device)
+        # word_feats (Na*Ns, 512)
+        detector_word_feats = ground_model.word_ebd(detector_word_glove)
+
+
+        #
+       
+        # for i,j in enumerate(DetectBox_class):
+        #     DetectBox_class_array[i][0:len(j)] = j
+        # 2. 
 
         if self.phase == 'train':
             # S_vis: for visual similarity (Na, Ns, Nb, Ne)
@@ -668,6 +729,11 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
     im_info = torch.tensor(1, dtype=torch.float).to(device)
     num_boxes = torch.tensor(1, dtype=torch.float).to(device)
     gt_boxes = torch.tensor(1, dtype=torch.float).to(device)
+
+    Detector_class_tensor = torch.tensor(1, dtype=torch.float).to(device)
+    DetectBox_score_tensor = torch.tensor(1, dtype=torch.float).to(device)
+    DetectBox_tensor = torch.tensor(1, dtype=torch.float).to(device)
+
     ground_model.train()
     ground_model.DVSA.init_train()
     ground_model.fasterRCNN.eval()
@@ -680,11 +746,35 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
     batch_prev = time.time()
     RCNN_time = 0
     batch_time = 0
-    for batch_ind, (blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, img_paths, img_ids, DetectBox_path, DetectBox_class, DetectBox_score, DetectBox) in enumerate(train_loader):
+    for batch_ind, (im_blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, img_paths, img_ids, DetectBox_path, DetectBox_class, DetectBox_score, DetectBox) in enumerate(train_loader):
     
     #for batch_ind, (im_blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, im_paths, img_ids) in enumerate(train_loader):
         if max(entities_length) == 0:
             continue
+
+
+        """
+        Process Detection box
+        """
+        maxLen = max([(len(x)) for x in DetectBox_class])
+        DetectBox_class_array = np.zeros([len(DetectBox_class), maxLen], dtype=np.float32)
+        for i,j in enumerate(DetectBox_class):
+            DetectBox_class_array[i][0:len(j)] = j
+        Detector_class_tensor = torch.from_numpy(DetectBox_class_array.copy()).to(device)
+
+        DetectBox_score_array = DetectBox_class_array = np.zeros([len(DetectBox_score), max([(len(x)) for x in DetectBox_score])], dtype=np.float32)
+        for i,j in enumerate(DetectBox_score):
+            DetectBox_score_array[i][0:len(j)] = j
+        DetectBox_score_tensor = torch.from_numpy(DetectBox_score_array.copy()).to(device)
+
+        DetectBox_array = DetectBox_array = np.zeros([len(DetectBox_score), max([(len(x)) for x in DetectBox])], dtype=np.float32)
+        for i,j in enumerate(DetectBox):
+            DetectBox_score_array[i][0:len(j)] = j
+        DetectBox_tensor = torch.from_numpy(DetectBox_array.copy()).to(device)
+
+
+        #Detector_class_tensor.resize_(DetectBox_class_pt.size()).copy_(DetectBox_class_pt)
+
         """Process visual feature""" 
         # default im_scales 1 and shape (5,)
         im_scales = [1]*len(im_blobs)
@@ -766,7 +856,7 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
         # get visual grounding loss
         # Df_sim (Na*Ns, Na*Ne)
         # Df (Na*Ns, Na*Ne) value scope [0, Nb)
-        D, D_sim, margin_loss = ground_model.DVSA(vis_feats, word_feats, entities_length)
+        D, D_sim, margin_loss = ground_model.DVSA(vis_feats, word_feats, entities_length, DetectBox_class, DetectBox_score, DetectBox)
 
         # use L1 loss to minimize the margin loss
         loss = criterion(margin_loss, torch.zeros_like(margin_loss))
@@ -940,7 +1030,7 @@ def validate(val_loader, ground_model, glove, criterion, epoch, args):
         # get visual grounding loss
         # D_sim (Na*Ns, Na*Ne)
         # D (Na*Ns, Na*Ne) value scope [0, Nb)
-        D, D_sim, margin_loss = ground_model.DVSA(vis_feats, word_feats, entities_length)
+        D, D_sim, margin_loss = ground_model.DVSA(boxes, vis_feats, word_feats, entities_length)
         D, D_sim = v2np(D), v2np(D_sim)
         D, D_sim = postprocess(D, D_sim, Na, Ns, Nb, Ne)
 
