@@ -1108,6 +1108,7 @@ def main():
     # Process word embedding dict
     glove = vocab.GloVe(name='6B', dim=args.glove_dim)
     print('load {} word'.format(len(glove.itos)))
+    print("training with my model")
 
     # output directory
     output_dir = os.path.join(args.save_dir, args.net, args.dataset)
