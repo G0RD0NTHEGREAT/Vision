@@ -746,7 +746,7 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
     batch_prev = time.time()
     RCNN_time = 0
     batch_time = 0
-    for batch_ind, (im_blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, img_paths, img_ids, DetectBox_path, DetectBox_class, DetectBox_score, DetectBox) in enumerate(train_loader):
+    for batch_ind, (im_blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, im_paths, img_ids, DetectBox_path, DetectBox_class, DetectBox_score, DetectBox) in enumerate(train_loader):
     
     #for batch_ind, (im_blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, im_paths, img_ids) in enumerate(train_loader):
         if max(entities_length) == 0:
@@ -769,10 +769,10 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
 
         DetectBox_array = np.zeros([len(DetectBox), max([(len(x)) for x in DetectBox]), 4], dtype=np.float32)
         for i,j in enumerate(DetectBox):
-            print(j)
+            #print(j)
             DetectBox_array[i][0:len(j)][:] = j
         DetectBox_tensor = torch.from_numpy(DetectBox_array.copy()).to(device)
-
+        
 
         #Detector_class_tensor.resize_(DetectBox_class_pt.size()).copy_(DetectBox_class_pt)
 
