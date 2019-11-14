@@ -589,7 +589,9 @@ class DVSA(torch.nn.Module):
         # detector_word_feats (Na,Ns*maxLen, 512)
         detector_word_feats = detector_word_feats.view(Na, Ns*maxLen, 512)
         print('detector_word_feats:{} '.format(detector_word_feats.size()))
-        print('detector_word_feats.norm(dim=2):{} '.format(detector_word_feats.norm(dim=2).size()))
+        print('detector_word_feats.norm(dim=2).[:,None]]:{} '.format(detector_word_feats.norm(dim=2).[:,None].size()))
+
+        print('detector_word_feats.norm(dim=2).unsqueeze(2):{} '.format(detector_word_feats.norm(dim=2).unsqueeze(2).size()))
 
         detector_word_feats = detector_word_feats / (detector_word_feats.norm(dim=2).unsqueeze(2)+EPS)
         word_feats = word_feats.view(Na, Ne, 512).permute(0, 2, 1) # (Na, 512, Ne)
