@@ -772,7 +772,7 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
             #print(j)
             DetectBox_array[i][0:len(j)][:] = j
         DetectBox_tensor = torch.from_numpy(DetectBox_array.copy()).to(device)
-        
+
 
         #Detector_class_tensor.resize_(DetectBox_class_pt.size()).copy_(DetectBox_class_pt)
 
@@ -857,7 +857,7 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
         # get visual grounding loss
         # Df_sim (Na*Ns, Na*Ne)
         # Df (Na*Ns, Na*Ne) value scope [0, Nb)
-        D, D_sim, margin_loss = ground_model.DVSA(vis_feats, word_feats, entities_length, DetectBox_class, DetectBox_score, DetectBox)
+        D, D_sim, margin_loss = ground_model.DVSA(boxes, vis_feats, word_feats, entities_length, DetectBox_class, DetectBox_score, DetectBox)
 
         # use L1 loss to minimize the margin loss
         loss = criterion(margin_loss, torch.zeros_like(margin_loss))
