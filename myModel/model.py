@@ -599,7 +599,8 @@ class DVSA(torch.nn.Module):
                     detector_word_glove[na][word_ind] = get_word(glove, entity)
                 else:
                     detector_word_glove[na][word_ind] = torch.zeros(args.glove_dim)
-                    raise Exception('{} is not in glove vocabulary'.format(entity))
+                    print('{} is not in glove vocabulary'.format(entity))
+                    # raise Exception('{} is not in glove vocabulary'.format(entity))
                 ent_p += 1
         # detector_word_glove ( Na*Ns, maxLen, 200)
         detector_word_glove = detector_word_glove.view(-1, args.glove_dim)
