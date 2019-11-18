@@ -581,12 +581,12 @@ class DVSA(torch.nn.Module):
         # detector_word_glove ( Na*Ns, maxLen, 200)
         detector_word_glove = detector_word_glove.view(-1, args.glove_dim)
         detector_word_glove = detector_word_glove.to(device)
-        # detector_word_feats (Na*Ns, maxLen, 512)
+        # detector_word_feats (Na*Ns*maxLen, 512)
         detector_word_feats = ground_model.word_ebd(detector_word_glove)
         # word_feats (NaxNe, 512)
 
         # print('Na: {}, Ns: {}, maxLen{} detector_word_feats:{} '.format(Na, Ns, maxLen, detector_word_feats.size()))
-        # detector_word_feats (Na,Ns*maxLen, 512)
+        # detector_word_feats (Na*Ns*maxLen, 512)
         detector_word_feats = detector_word_feats.view(Na, Ns*maxLen, 512)
         # print('detector_word_feats:{} '.format(detector_word_feats.size()))
         # print('detector_word_feats.norm(dim=2)[:,None]]:{} '.format(detector_word_feats.norm(dim=2)[:,None].size()))
@@ -609,14 +609,14 @@ class DVSA(torch.nn.Module):
                     print('a: {}, s: {}, e: {}'.format(a,s,e))
                     print('lenth of DetectBox_score is : {}'.format(len(DetectBox_score)))
                     print('index of maxSim[a,s,e] is : {}'.format(maxSim[a,s,e]))
-                    print('length of DetectBox_score[a*s+s] is {}'.format(len(DetectBox_score[a*s+s])))
+                    print('length of DetectBox_score[(a-1)*s+s] is {}'.format(len(DetectBox_score[(a-1)*s+s])))
                     
-                    if maxSim[a,s,e] > len(DetectBox_score[a*s+s])-1:
+                    if maxSim[a,s,e] > len(DetectBox_score[(a-1)*s+s])-1:
                         score = 0
                         word = "NONE"
                     else:
-                        score = DetectBox_score[a*s+s][maxSim[a,s,e]]
-                        word = DetectBox_class[a*s+s][maxSim[a,s,e]]
+                        score = DetectBox_score[(a-1)*s+s][maxSim[a,s,e]]
+                        word = DetectBox_class[(a-1)*s+s][maxSim[a,s,e]]
                     print('Max similarity score for Action {} Frame {} Entity {} is {} ({})'
                           .format(a,s,e,score,word))
                     maxSim[a,s,e] = score
