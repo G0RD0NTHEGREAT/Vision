@@ -610,6 +610,7 @@ class DVSA(torch.nn.Module):
                     print('max entities_length: {}'.format(max(entities_length)))
                     print('a: {}, s: {}, e: {}'.format(a,s,e))
                     print('entity length: {}'.format(len(entities)))
+                    print(entities)
                     if e < max(entities_length):
                         print('entity is {}'.format(entities[e]))
                     print('lenth of DetectBox_score is : {}'.format(len(DetectBox_score)))
