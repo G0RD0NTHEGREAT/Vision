@@ -604,15 +604,16 @@ class DVSA(torch.nn.Module):
 
 
         for a in range(Na):
+            entity = entities[a]
             for s in range(Ns):
                 for e in range(Ne):
                     print('Na: {}, Ns: {}, Ne: {}'.format(Na,Ns,Ne))
-                    print('max entities_length: {}, entities_length:{}'.format(max(entities_length),entities_length))
+                    #print('max entities_length: {}, entities_length:{}'.format(max(entities_length),entities_length))
                     print('a: {}, s: {}, e: {}'.format(a,s,e))
-                    print('entity length: {}'.format(len(entities)))
-                    print('entity[a]: {}'.format(entities[a]))
-                    if e < len(entities[a]):
-                        print('entity is {}'.format(entities[e]))
+                    #print('entity length: {}'.format(len(entities)))
+                    #print('entity[a]: {}'.format(entities[a]))
+                    if e < len(entity):
+                        print('entity is {} entity[e] is: {}'.format(entity, entity[e]))
                     print('lenth of DetectBox_score is : {}'.format(len(DetectBox_score)))
                     print('index of maxSim[a,s,e] is : {}'.format(maxSim[a,s,e]))
                     print('length of DetectBox_score[a*s+s] is {}'.format(len(DetectBox_score[a*s+s])))
@@ -623,11 +624,12 @@ class DVSA(torch.nn.Module):
                     else:
                         score = DetectBox_score[a*s+s][maxSim[a,s,e]]
                         word = DetectBox_class[a*s+s][maxSim[a,s,e]]
+                    
                     print('Max similarity score for Action {} Frame {} Entity {} is {} ({})'
                           .format(a,s,e,score,word))
-                    if e < len(entities[a]):
-                        print('entity:{}'.format(entities[e]))
-                        print('maxSim word:{}'.format(word))
+                    if e < len(entity):
+                        print('entity[e]:{}, in entity: {}'.format(entity[e]), entity)
+                        print('maxSim word:{}, in all class'.format(word,DetectBox_class[a*s+s] ))
 
                     maxSim[a,s,e] = score
             
