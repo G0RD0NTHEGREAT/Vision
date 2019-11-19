@@ -557,8 +557,8 @@ class DVSA(torch.nn.Module):
         #******************Knowledge Part*************
         # 1. K (knowledge distance from query and class(from Detector))
         maxLen = max([(len(x)) for x in DetectBox_class])
-        #Knowledge_sim = np.zeros([len(DetectBox_class), maxLen], dtype=np.float32)
-
+        # Knowledge_sim = np.zeros([len(DetectBox_class), maxLen], dtype=np.float32)
+        Knowledge_sim = torch.zeros(Na,Ns,Ne)
         print("getting glove_feats for detector word")
 
 
@@ -642,9 +642,9 @@ class DVSA(torch.nn.Module):
                         print('entity[e]:{}, in entity: {}'.format(entity[e], entity))
                         print('maxSim word:{}, in all class {}'.format(word,DetectBox_class[a*Ns+s] ))
 
-                    maxSim[a,s,e] = Detect_score*Word_sim_score
-                    #print(maxSim[a,s,e])
-                    if maxSim[a,s,e] > 0.1:
+                    Knowledge_sim[a,s,e] = Detect_score*Word_sim_score
+                    print(Knowledge_sim[a,s,e])
+                    if Knowledge_sim[a,s,e] > 0.4:
                         print('score of maxSim[a,s,e] is : {}'.format(maxSim[a,s,e]))
                         print('score of sim_scr[a,s,e] is : {}'.format(sim_scr[a,s,e]))
                         print('score of Detect_score is : {}'.format(Detect_score))
