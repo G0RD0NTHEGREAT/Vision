@@ -601,37 +601,39 @@ class DVSA(torch.nn.Module):
         maxSim = torch.zeros(Na, Ns, Ne).to(device)
         maxSim = sim_mat.view(Na,Ns,maxLen,Ne).argmax(dim=2)    # (Na, Ns, Ne) with index
 
+        sim_scr, maxind = sim_mat.view(Na,Ns,maxLen,Ne).max(2)
+        print('sim_scr.size: {}, maxind.size: {}'.format(sim_scr.size(), maxind.size()))
 
 
-        for a in range(Na):
-            entity = entities[a]
-            for s in range(Ns):
-                for e in range(Ne):
-                    print('Na: {}, Ns: {}, Ne: {}'.format(Na,Ns,Ne))
-                    #print('max entities_length: {}, entities_length:{}'.format(max(entities_length),entities_length))
-                    print('a: {}, s: {}, e: {}'.format(a,s,e))
-                    #print('entity length: {}'.format(len(entities)))
-                    #print('entity[a]: {}'.format(entities[a]))
-                    if e < len(entity):
-                        print('entity is {} entity[e] is: {}'.format(entity, entity[e]))
-                    print('lenth of DetectBox_score is : {}'.format(len(DetectBox_score)))
-                    print('index of maxSim[a,s,e] is : {}'.format(maxSim[a,s,e]))
-                    print('length of DetectBox_score[a*Ns+s] is {}'.format(len(DetectBox_score[a*Ns+s])))
+        # for a in range(Na):
+        #     entity = entities[a]
+        #     for s in range(Ns):
+        #         for e in range(Ne):
+        #             print('Na: {}, Ns: {}, Ne: {}'.format(Na,Ns,Ne))
+        #             #print('max entities_length: {}, entities_length:{}'.format(max(entities_length),entities_length))
+        #             print('a: {}, s: {}, e: {}'.format(a,s,e))
+        #             #print('entity length: {}'.format(len(entities)))
+        #             #print('entity[a]: {}'.format(entities[a]))
+        #             if e < len(entity):
+        #                 print('entity is {} entity[e] is: {}'.format(entity, entity[e]))
+        #             print('lenth of DetectBox_score is : {}'.format(len(DetectBox_score)))
+        #             print('index of maxSim[a,s,e] is : {}'.format(maxSim[a,s,e]))
+        #             print('length of DetectBox_score[a*Ns+s] is {}'.format(len(DetectBox_score[a*Ns+s])))
                     
-                    if maxSim[a,s,e] > len(DetectBox_score[a*Ns+s])-1:
-                        score = 0
-                        word = "NONE"
-                    else:
-                        score = DetectBox_score[a*Ns+s][maxSim[a,s,e]]
-                        word = DetectBox_class[a*Ns+s][maxSim[a,s,e]]
+        #             if maxSim[a,s,e] > len(DetectBox_score[a*Ns+s])-1:
+        #                 score = 0
+        #                 word = "NONE"
+        #             else:
+        #                 score = DetectBox_score[a*Ns+s][maxSim[a,s,e]]
+        #                 word = DetectBox_class[a*Ns+s][maxSim[a,s,e]]
                     
-                    print('Max similarity score for Action {} Frame {} Entity {} is {} ({})'
-                          .format(a,s,e,score,word))
-                    if e < len(entity):
-                        print('entity[e]:{}, in entity: {}'.format(entity[e], entity))
-                        print('maxSim word:{}, in all class {}'.format(word,DetectBox_class[a*Ns+s] ))
+        #             print('Max similarity score for Action {} Frame {} Entity {} is {} ({})'
+        #                   .format(a,s,e,score,word))
+        #             if e < len(entity):
+        #                 print('entity[e]:{}, in entity: {}'.format(entity[e], entity))
+        #                 print('maxSim word:{}, in all class {}'.format(word,DetectBox_class[a*Ns+s] ))
 
-                    maxSim[a,s,e] = score
+        #             maxSim[a,s,e] = score
             
             
 
