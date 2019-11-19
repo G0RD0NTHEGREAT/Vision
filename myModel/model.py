@@ -610,8 +610,8 @@ class DVSA(torch.nn.Module):
                     print('max entities_length: {}, entities_length:{}'.format(max(entities_length),entities_length))
                     print('a: {}, s: {}, e: {}'.format(a,s,e))
                     print('entity length: {}'.format(len(entities)))
-                    print(entities)
-                    if e < len(entities):
+                    print('entity[a]: {}'.format(entities[a]))
+                    if e < len(entities[a]):
                         print('entity is {}'.format(entities[e]))
                     print('lenth of DetectBox_score is : {}'.format(len(DetectBox_score)))
                     print('index of maxSim[a,s,e] is : {}'.format(maxSim[a,s,e]))
@@ -625,7 +625,7 @@ class DVSA(torch.nn.Module):
                         word = DetectBox_class[a*s+s][maxSim[a,s,e]]
                     print('Max similarity score for Action {} Frame {} Entity {} is {} ({})'
                           .format(a,s,e,score,word))
-                    if e < len(entities):
+                    if e < len(entities[a]:
                         print('entity:{}'.format(entities[e]))
                         print('maxSim word:{}'.format(word))
 
@@ -890,7 +890,7 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
         # get visual grounding loss
         # Df_sim (Na*Ns, Na*Ne)
         # Df (Na*Ns, Na*Ne) value scope [0, Nb)
-        D, D_sim, margin_loss = ground_model.DVSA(entities,ground_model, glove, boxes, vis_feats, word_feats, entities_length, DetectBox_class, DetectBox_score, DetectBox, args)
+        D, D_sim, margin_loss = ground_model.DVSA(vid_entities,ground_model, glove, boxes, vis_feats, word_feats, entities_length, DetectBox_class, DetectBox_score, DetectBox, args)
 
         # use L1 loss to minimize the margin loss
         loss = criterion(margin_loss, torch.zeros_like(margin_loss))
