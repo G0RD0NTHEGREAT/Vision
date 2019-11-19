@@ -606,7 +606,7 @@ class DVSA(torch.nn.Module):
         for a in range(Na):
             for s in range(Ns):
                 for e in range(Ne):
-                    
+                    print('Na: {}, Ns: {}, Ne: {}'.format(Na,Ns,Ne))
                     print('a: {}, s: {}, e: {}'.format(a,s,e))
                     print('entity length: {}'.format(len(entities)))
                     print('entity is {}'.format(entities[e]))
