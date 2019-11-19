@@ -643,6 +643,7 @@ class DVSA(torch.nn.Module):
                     #     print('maxSim word:{}, in all class {}'.format(word,DetectBox_class[a*Ns+s] ))
 
                     maxSim[a,s,e] = Detect_score*Word_sim_score
+                    print(maxSim[a,s,e])
                     if maxSim[a,s,e] > 0.1:
                         print('score of maxSim[a,s,e] is : {}'.format(maxSim[a,s,e]))
                         print('score of sim_scr[a,s,e] is : {}'.format(sim_scr[a,s,e]))
