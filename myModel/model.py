@@ -514,7 +514,7 @@ class DVSA(torch.nn.Module):
         self.Na = self.args.batch_size_val
         self.phase = 'eval'
 
-    def forward(self,ground_model, glove, boxes, vis_feats, word_feats, entities_length, DetectBox_class, DetectBox_score, DetectBox, args):
+    def forward(self,entities,ground_model, glove, boxes, vis_feats, word_feats, entities_length, DetectBox_class, DetectBox_score, DetectBox, args):
         """ Process EM part in video level
         :param: vis_feats (Nax100, 512)
         :param: boxes (batch(Na), num_boxes(100), 4)
@@ -606,6 +606,7 @@ class DVSA(torch.nn.Module):
         for a in range(Na):
             for s in range(Ns):
                 for e in range(Ne):
+                    print('entity is {}'.format(entity[e]))
                     print('a: {}, s: {}, e: {}'.format(a,s,e))
                     print('lenth of DetectBox_score is : {}'.format(len(DetectBox_score)))
                     print('index of maxSim[a,s,e] is : {}'.format(maxSim[a,s,e]))
@@ -619,6 +620,9 @@ class DVSA(torch.nn.Module):
                         word = DetectBox_class[a*s+s][maxSim[a,s,e]]
                     print('Max similarity score for Action {} Frame {} Entity {} is {} ({})'
                           .format(a,s,e,score,word))
+                    print('entity:{}'.format(entity[e]))
+                    print('maxSim word:{}'.format(word))
+
                     maxSim[a,s,e] = score
             
             
@@ -880,7 +884,7 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
         # get visual grounding loss
         # Df_sim (Na*Ns, Na*Ne)
         # Df (Na*Ns, Na*Ne) value scope [0, Nb)
-        D, D_sim, margin_loss = ground_model.DVSA(ground_model, glove, boxes, vis_feats, word_feats, entities_length, DetectBox_class, DetectBox_score, DetectBox, args)
+        D, D_sim, margin_loss = ground_model.DVSA(entities,ground_model, glove, boxes, vis_feats, word_feats, entities_length, DetectBox_class, DetectBox_score, DetectBox, args)
 
         # use L1 loss to minimize the margin loss
         loss = criterion(margin_loss, torch.zeros_like(margin_loss))
