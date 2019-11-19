@@ -607,9 +607,11 @@ class DVSA(torch.nn.Module):
             for s in range(Ns):
                 for e in range(Ne):
                     print('Na: {}, Ns: {}, Ne: {}'.format(Na,Ns,Ne))
+                    print('max entities_length: {}'.format(max(entities_length)))
                     print('a: {}, s: {}, e: {}'.format(a,s,e))
                     print('entity length: {}'.format(len(entities)))
-                    print('entity is {}'.format(entities[e]))
+                    if e < max(entities_length):
+                        print('entity is {}'.format(entities[e]))
                     print('lenth of DetectBox_score is : {}'.format(len(DetectBox_score)))
                     print('index of maxSim[a,s,e] is : {}'.format(maxSim[a,s,e]))
                     print('length of DetectBox_score[a*s+s] is {}'.format(len(DetectBox_score[a*s+s])))
@@ -622,8 +624,9 @@ class DVSA(torch.nn.Module):
                         word = DetectBox_class[a*s+s][maxSim[a,s,e]]
                     print('Max similarity score for Action {} Frame {} Entity {} is {} ({})'
                           .format(a,s,e,score,word))
-                    print('entity:{}'.format(entities[e]))
-                    print('maxSim word:{}'.format(word))
+                    if e < max(entities_length):
+                        print('entity:{}'.format(entities[e]))
+                        print('maxSim word:{}'.format(word))
 
                     maxSim[a,s,e] = score
             
