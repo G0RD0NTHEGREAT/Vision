@@ -642,9 +642,9 @@ class DVSA(torch.nn.Module):
                     #     print('maxSim word:{}, in all class {}'.format(word,DetectBox_class[a*Ns+s] ))
 
                     Knowledge_sim[a,s,e] = Detect_score*Word_sim_score
-                    print(Knowledge_sim[a,s,e].item())
+                    #print(Knowledge_sim[a,s,e].item())
                     if Knowledge_sim[a,s,e].item() > 0.4:
-                        print('score of maxSim[a,s,e] is : {}'.format(maxSim[a,s,e]))
+                        print('score of Knowledge_sim[a,s,e] is : {}'.format(Knowledge_sim[a,s,e].item()))
                         print('score of sim_scr[a,s,e] is : {}'.format(sim_scr[a,s,e]))
                         print('score of Detect_score is : {}'.format(Detect_score))
                         print('entity[e]:{}, in entity: {}'.format(entity[e], entity))
