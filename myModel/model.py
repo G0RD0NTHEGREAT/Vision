@@ -533,7 +533,6 @@ class DVSA(torch.nn.Module):
         div_vec = torch.tensor([self.zero2one(i) for i in entities_length], dtype=torch.float).to(device)
 
 
-        print('Na is : {}, maxLen is : {}, len(DetectBox) is : {},  len(DetectBox_class) is : {}'.format(Na, maxLen, len(DetectBox), len(DetectBox_class)))
         # S_mask: (NaxNsxNb, Na, Ne)
         S_mask = np.zeros((Na*Ns*Nb, Na, Ne))
         for act_ind, entity_length in enumerate(entities_length):
@@ -561,7 +560,8 @@ class DVSA(torch.nn.Module):
         # Knowledge_sim = np.zeros([len(DetectBox_class), maxLen], dtype=np.float32)
         Knowledge_sim = torch.zeros(Na,Ns,Ne)
         # Knowledge_sim = torch.zeros(Na,Ns,Nb,Na,Ne)
-        
+        print('Na is : {}, maxLen is : {}, len(DetectBox) is : {},  len(DetectBox_class) is : {}'.format(Na, maxLen, len(DetectBox), len(DetectBox_class)))
+
         print("getting glove_feats for detector word")
 
 
@@ -631,7 +631,7 @@ class DVSA(torch.nn.Module):
         # maxSim = sim_mat.view(Na,Ns,maxLen,Ne).argmax(dim=2)    # (Na, Ns, Ne) with index
 
         # sim_scr, maxind = sim_mat.view(Na,Ns,maxLen,Ne).max(2)
-        
+
         # print('sim_scr.size: {}, maxind.size: {}'.format(sim_scr.size(), maxind.size()))
 
 
