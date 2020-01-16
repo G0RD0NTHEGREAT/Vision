@@ -624,32 +624,32 @@ class DVSA(torch.nn.Module):
         # print('detector_word_feats.norm(dim=2)[:,None]]:{} '.format(detector_word_feats.norm(dim=2)[:,None].size()))
 
         # print('detector_word_feats.norm(dim=2).unsqueeze(2):{} '.format(detector_word_feats.norm(dim=2).unsqueeze(2).size()))
-        print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}').format(Na, Ns, maxLen, Na, Ne)
+        print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}'.format(Na, Ns, maxLen, Na, Ne))
         detector_word_feats = detector_word_feats / (detector_word_feats.norm(dim=2, keepdim=True)+EPS)
         word_feats = word_feats.view(Na, Ne, 512).permute(2, 0, 1) # (512, Na, Ne)
         word_feats = word_feats / (word_feats.norm(dim=0, keepdim= True)+ EPS)
-        print('shape of detector_word_feats: {}').format(detector_word_feats.size())
-        print('shape of word_feats: {}').format(word_feats.size())
+        print('shape of detector_word_feats: {}'.format(detector_word_feats.size()))
+        print('shape of word_feats: {}'.format(word_feats.size()))
 
         #  similarity score between words
         #  sim_mat (Na, Ns, Nd, Na, Ne)
         sim_mat = detector_word_feats.mm(word_feats) # (Na, Ns*maxlen, Na, Ne)  <==  (Na, Ns*maxLen, 512)  ( 512,Na, Ne)
         sim_mat = word_feats.view(Na, Ns, maxLen, Na, Ne )# (Na, Ns, Nd, Na, Ne)
-        print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}').format(Na, Ns, maxLen, Na, Ne)
-        print('shape of sim_mat: {}').format(sim_mat.size())
+        print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}'.format(Na, Ns, maxLen, Na, Ne))
+        print('shape of sim_mat: {}'.format(sim_mat.size()))
 
         # Getting regression loss
         # d_ti_n (Na, Ns, Nb, Nd)  
         boxes = boxes.reshape(Na*100, 4)       # Na*100,4 = Na*Ns*Nb,4 ==> Na, Ns, Nb, 4
-        print('shape of boxes: {}').format(boxes.size())
+        print('shape of boxes: {}'.format(boxes.size()))
         DetectBox_ = torch.zeros(len(DetectBox)*maxLen, 4)   # (Na*Ns * Nd, 4)
-        print('shape of DetectBox_ at init: {}').format(DetectBox_.size())
+        print('shape of DetectBox_ at init: {}'.format(DetectBox_.size()))
         for na in range (len(DetectBox)):
             for box_ind in range(len(DetectBox[na])):
                 box = DetectBox[na][box_ind]
                 # print('{} is printed in {}'.format(entity,DetectBox_class[na]))
                 DetectBox_[na*maxLen + box_ind] = box
-        print('shape of DetectBox_ filled: {}').format(DetectBox_.size())
+        print('shape of DetectBox_ filled: {}'.format(DetectBox_.size()))
         
         d_ti_n = torch.zeros(Na, Ns, Nb, Nd)    # (Na, Ns, Nb, Nd)  
         for na in range(Na):
@@ -657,7 +657,7 @@ class DVSA(torch.nn.Module):
                 for nb in range(Nb):
                     for nd in range(Nd):
                         d_ti_n = self.IOU(boxes[na*Na+ns*Ns+nb], DetectBox_[na*Na+ns*Ns+nd])
-        print('shape of d_ti_n filled: {}').format(d_ti_n.size())
+        print('shape of d_ti_n filled: {}'.format(d_ti_n.size()))
 
 
         # BestBox = torch.index_select(boxes, 0, indarr).view(Na, Ns, Ne, -1) # Na , Ns, Ne, 4 
