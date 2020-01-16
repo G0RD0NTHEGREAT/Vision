@@ -587,8 +587,8 @@ class DVSA(torch.nn.Module):
         # 1. K (knowledge distance from query and class(from Detector))
         maxLen = max([(len(x)) for x in DetectBox_class])
         # Knowledge_sim = np.zeros([len(DetectBox_class), maxLen], dtype=np.float32)
-        Knowledge_sim = torch.zeros(Na,Ns,Ne)
-        # Knowledge_sim = torch.zeros(Na,Ns,Nb,Na,Ne)
+        #Knowledge_sim = torch.zeros(Na,Ns,Ne)
+        Knowledge_sim = torch.zeros(Na,Ns,Nb,Na,Ne)
         print('Na is : {}, maxLen is : {}, len(DetectBox) is : {},  len(DetectBox_class) is : {}'.format(Na, maxLen, len(DetectBox), len(DetectBox_class)))
 
         print("getting glove_feats for detector word")
@@ -664,9 +664,18 @@ class DVSA(torch.nn.Module):
                         d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns+ns*Nb+nb], DetectBox_[na*Ns+ns*maxLen+nd])
         print('shape of d_ti_n filled: {}'.format(d_ti_n.size()))
 
-        print('boxes cord: {},\n DetectBox cord: \n{}'.format(boxes[0],DetectBox_[0:maxLen]))
-        print('d_ti_n {}'.format(d_ti_n[0,0,0,:]))
+        # print('boxes cord: {},\n DetectBox cord: \n{}'.format(boxes[0],DetectBox_[0:maxLen]))
+        # print('d_ti_n {}'.format(d_ti_n[0,0,0,:]))
 
+
+        # d_ti_n (Na, Ns, Nb, Nd)  ,  sim_mat (Na, Ns, Nd, Na, Ne)
+        # Knowledge_sim (Na,Ns,Nb,Na,Ne)
+        sim_mat_ = sim_mat.unsqueeze(dim=2)                 # sim_mat_  (Na, Ns, 1 , Nd, Na, Ne)
+        d_ti_n_ = d_ti_n_.unsqueeze(dim=4).unsqueeze(dim=4) # d_ti_n_   (Na, Ns, Nb, Nd, 1, 1)
+        
+        Knowledge_sim = (sim_mat_ * d_ti_n_).max(dim=3)
+        print('Na: {}, Ns: {}, Nb: {}, Na: {}, Ne: {}'.format(Na, Ns, Nb, Na, Ne))
+        print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
         # BestBox = torch.index_select(boxes, 0, indarr).view(Na, Ns, Ne, -1) # Na , Ns, Ne, 4 
 
         # BestBox (Na , Ns, Ne, 4 (0-223)) 
