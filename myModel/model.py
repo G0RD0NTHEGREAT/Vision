@@ -682,6 +682,7 @@ class DVSA(torch.nn.Module):
         Knowledge_sim = torch.zeros(Na,Ns,Nb,Na,Ne).to(device)
         Knowledge_sim = temp.max(dim=3)
         print('Na: {}, Ns: {}, Nb: {}, Na: {}, Ne: {}'.format(Na, Ns, Nb, Na, Ne))
+        pdb.set_trace()
         print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
         # BestBox = torch.index_select(boxes, 0, indarr).view(Na, Ns, Ne, -1) # Na , Ns, Ne, 4 
 
