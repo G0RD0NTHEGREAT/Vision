@@ -672,9 +672,9 @@ class DVSA(torch.nn.Module):
         # Knowledge_sim (Na,Ns,Nb,Na,Ne)
 
         sim_mat_ = sim_mat.unsqueeze(dim=2)                 # sim_mat_  (Na, Ns, 1 , Nd, Na, Ne)
-        d_ti_n_ = d_ti_n.unsqueeze(dim=4).unsqueeze(dim=4) # d_ti_n_   (Na, Ns, Nb, Nd, 1, 1)
-        sim_mat_.to(sim_mat.device)
-        d_ti_n_.to(sim_mat.device)
+        d_ti_n_  = d_ti_n.unsqueeze(dim=4).unsqueeze(dim=4) # d_ti_n_   (Na, Ns, Nb, Nd, 1, 1)
+        sim_mat_ = sim_mat_.to(sim_mat.device)
+        d_ti_n_  = d_ti_n_.to(sim_mat.device)
 
         pdb.set_trace()
         Knowledge_sim = (sim_mat_ * d_ti_n_).max(dim=3)
