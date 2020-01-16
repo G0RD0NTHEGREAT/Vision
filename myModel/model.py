@@ -541,7 +541,7 @@ class DVSA(torch.nn.Module):
             Area2 = width2*height2 
             ratio = Area*1./(Area1+Area2-Area) 
         # return IOU 
-        return ratio,boxA,boxB
+        return ratio
 
     def forward(self,entities,ground_model, glove, boxes, vis_feats, word_feats, entities_length, DetectBox_class, DetectBox_score, DetectBox, args):
         """ Process EM part in video level
