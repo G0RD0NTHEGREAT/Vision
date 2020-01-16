@@ -619,15 +619,17 @@ class DVSA(torch.nn.Module):
 
         # print('Na: {}, Ns: {}, maxLen{} detector_word_feats:{} '.format(Na, Ns, maxLen, detector_word_feats.size()))
         # detector_word_feats (Na*Ns*maxLen, 512)
-        detector_word_feats = detector_word_feats.view(Na, Ns*maxLen, 512)
+        #detector_word_feats = detector_word_feats.view(Na, Ns*maxLen, 512)
         # print('detector_word_feats:{} '.format(detector_word_feats.size()))
         # print('detector_word_feats.norm(dim=2)[:,None]]:{} '.format(detector_word_feats.norm(dim=2)[:,None].size()))
 
         # print('detector_word_feats.norm(dim=2).unsqueeze(2):{} '.format(detector_word_feats.norm(dim=2).unsqueeze(2).size()))
         print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}'.format(Na, Ns, maxLen, Na, Ne))
-        detector_word_feats = detector_word_feats / (detector_word_feats.norm(dim=2, keepdim=True)+EPS)
-        word_feats = word_feats.view(Na, Ne, 512).permute(2, 0, 1) # (512, Na, Ne)
-        word_feats = word_feats / (word_feats.norm(dim=0, keepdim= True)+ EPS)
+        detector_word_feats = detector_word_feats / (detector_word_feats.norm(dim=1, keepdim=True)+EPS)
+         
+        #word_feats = word_feats.view(Na, Ne, 512).permute(2, 0, 1) # (512, Na, Ne)
+        word_feats = word_feats / (word_feats.norm(dim=1, keepdim= True)+ EPS)
+        word_feats = word_feats.permute(1,0) # (512, Na*Ne)
         print('shape of detector_word_feats: {}'.format(detector_word_feats.size()))
         print('shape of word_feats: {}'.format(word_feats.size()))
 
@@ -644,8 +646,8 @@ class DVSA(torch.nn.Module):
         print('shape of boxes: {}'.format(boxes.size()))
         DetectBox_ = torch.zeros(len(DetectBox)*maxLen, 4)   # (Na*Ns * Nd, 4)
         print('shape of DetectBox_ at init: {}'.format(DetectBox_.size()))
-        for na in range (len(DetectBox)):
-            for box_ind in range(len(DetectBox[na])):
+        for na in range (len(DetectBox)):       # na (0-Na*Ns)
+            for box_ind in range(len(DetectBox[na])):   # box_ind <= Nd 
                 box = DetectBox[na][box_ind]
                 # print('{} is printed in {}'.format(entity,DetectBox_class[na]))
                 DetectBox_[na*maxLen + box_ind] = box
@@ -656,7 +658,7 @@ class DVSA(torch.nn.Module):
             for ns in range(Ns):
                 for nb in range(Nb):
                     for nd in range(Nd):
-                        d_ti_n = self.IOU(boxes[na*Na+ns*Ns+nb], DetectBox_[na*Na+ns*Ns+nd])
+                        d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns+ns*Nb+nb], DetectBox_[na*Ns+ns*Nd+nd])
         print('shape of d_ti_n filled: {}'.format(d_ti_n.size()))
 
 
