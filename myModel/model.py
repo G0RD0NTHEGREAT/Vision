@@ -588,7 +588,7 @@ class DVSA(torch.nn.Module):
         maxLen = max([(len(x)) for x in DetectBox_class])
         # Knowledge_sim = np.zeros([len(DetectBox_class), maxLen], dtype=np.float32)
         #Knowledge_sim = torch.zeros(Na,Ns,Ne)
-        Knowledge_sim = torch.zeros(Na,Ns,Nb,Na,Ne)
+        
         print('Na is : {}, maxLen is : {}, len(DetectBox) is : {},  len(DetectBox_class) is : {}'.format(Na, maxLen, len(DetectBox), len(DetectBox_class)))
 
         print("getting glove_feats for detector word")
@@ -646,7 +646,7 @@ class DVSA(torch.nn.Module):
         boxes = boxes.to(sim_mat.device)
 
         print('shape of boxes: {}'.format(boxes.size()))
-        DetectBox_ = torch.zeros(len(DetectBox)*maxLen, 4)   # (Na*Ns * Nd, 4)
+        DetectBox_ = torch.zeros(len(DetectBox)*maxLen, 4).to(device)   # (Na*Ns * Nd, 4)
         DetectBox_ = DetectBox_.to(sim_mat.device)
         print('shape of DetectBox_ at init: {}'.format(DetectBox_.size()))
         for na in range (len(DetectBox)):       # na (0-Na*Ns)
@@ -656,7 +656,7 @@ class DVSA(torch.nn.Module):
                 DetectBox_[na*maxLen + box_ind] = torch.FloatTensor(box)
         print('shape of DetectBox_ filled: {}'.format(DetectBox_.size()))
         
-        d_ti_n = torch.zeros(Na, Ns, Nb, maxLen)    # (Na, Ns, Nb, Nd)  
+        d_ti_n = torch.zeros(Na, Ns, Nb, maxLen).to(device)    # (Na, Ns, Nb, Nd)  
         for na in range(Na):
             for ns in range(Ns):
                 for nb in range(Nb):
@@ -670,15 +670,17 @@ class DVSA(torch.nn.Module):
 
         # d_ti_n (Na, Ns, Nb, Nd)  ,  sim_mat (Na, Ns, Nd, Na, Ne)
         # Knowledge_sim (Na,Ns,Nb,Na,Ne)
-        sim_mat_ = torch.zeros(Na, Ns, 1 , maxLen, Na, Ne)
+        sim_mat_ = torch.zeros(Na, Ns, 1 , maxLen, Na, Ne).to(device)
         sim_mat_ = sim_mat.unsqueeze(dim=2)                 # sim_mat_  (Na, Ns, 1 , Nd, Na, Ne)
-        d_ti_n_  = torch.zeros(Na, Ns, Nb, maxLen, 1, 1)
+        d_ti_n_  = torch.zeros(Na, Ns, Nb, maxLen, 1, 1).to(device)
         d_ti_n_  = d_ti_n.unsqueeze(dim=4).unsqueeze(dim=4) # d_ti_n_   (Na, Ns, Nb, Nd, 1, 1)
         sim_mat_ = sim_mat_.to(sim_mat.device)
         d_ti_n_  = d_ti_n_.to(sim_mat.device)
 
         #pdb.set_trace()
-        Knowledge_sim = (sim_mat_ * d_ti_n_).max(dim=3)
+        temp = torch.zeros(Na, Ns, Nb , maxLen, Na, Ne).to(device)
+        Knowledge_sim = torch.zeros(Na,Ns,Nb,Na,Ne).to(device)
+        Knowledge_sim = temp.max(dim=3)
         print('Na: {}, Ns: {}, Nb: {}, Na: {}, Ne: {}'.format(Na, Ns, Nb, Na, Ne))
         print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
         # BestBox = torch.index_select(boxes, 0, indarr).view(Na, Ns, Ne, -1) # Na , Ns, Ne, 4 
