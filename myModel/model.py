@@ -588,7 +588,7 @@ class DVSA(torch.nn.Module):
         maxLen = max([(len(x)) for x in DetectBox_class])
         # Knowledge_sim = np.zeros([len(DetectBox_class), maxLen], dtype=np.float32)
         #Knowledge_sim = torch.zeros(Na,Ns,Ne)
-        
+        Knowledge_sim = torch.zeros(Na,Ns,Nb,Na,Ne)to(device) 
         print('Na is : {}, maxLen is : {}, len(DetectBox) is : {},  len(DetectBox_class) is : {}'.format(Na, maxLen, len(DetectBox), len(DetectBox_class)))
 
         print("getting glove_feats for detector word")
@@ -678,12 +678,9 @@ class DVSA(torch.nn.Module):
         d_ti_n_  = d_ti_n_.to(sim_mat.device)
 
         #pdb.set_trace()
-        temp = torch.zeros(Na, Ns, Nb , maxLen, Na, Ne).to(device)
-        Knowledge_sim = torch.zeros(Na,Ns,Nb,Na,Ne).to(device)
-        Knowledge_sim = temp.max(dim=3)
-        print('Na: {}, Ns: {}, Nb: {}, Na: {}, Ne: {}'.format(Na, Ns, Nb, Na, Ne))
-        pdb.set_trace()
-        print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
+        Knowledge_sim , _= (sim_mat_ * d_ti_n_).max(dim=3)
+        # print('Na: {}, Ns: {}, Nb: {}, Na: {}, Ne: {}'.format(Na, Ns, Nb, Na, Ne))
+        # print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
         # BestBox = torch.index_select(boxes, 0, indarr).view(Na, Ns, Ne, -1) # Na , Ns, Ne, 4 
 
         # BestBox (Na , Ns, Ne, 4 (0-223)) 
