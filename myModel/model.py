@@ -514,6 +514,35 @@ class DVSA(torch.nn.Module):
         self.Na = self.args.batch_size_val
         self.phase = 'eval'
 
+    def IOU(self, boxA, boxB):
+        x1 = boxA[0] 
+        y1 = boxA[1] 
+        width1 = boxA[2]-boxA[0] 
+        height1 = boxA[3]-boxA[1] 
+
+        x2 = boxB[0] 
+        y2 = boxB[1] 
+        width2 = boxB[2]-boxB[0] 
+        height2 = boxB[3]-boxB[1] 
+
+        endx = max(x1+width1,x2+width2) 
+        startx = min(x1,x2) 
+        width = width1+width2-(endx-startx) 
+
+        endy = max(y1+height1,y2+height2) 
+        starty = min(y1,y2) 
+        height = height1+height2-(endy-starty) 
+
+        if width <=0 or height <= 0: 
+            ratio = 0 # 重叠率为 0  
+        else: 
+            Area = width*height # 两矩形相交面积 
+            Area1 = width1*height1 
+            Area2 = width2*height2 
+            ratio = Area*1./(Area1+Area2-Area) 
+        # return IOU 
+        return ratio,boxA,boxB
+
     def forward(self,entities,ground_model, glove, boxes, vis_feats, word_feats, entities_length, DetectBox_class, DetectBox_score, DetectBox, args):
         """ Process EM part in video level
         :param: vis_feats (Nax100, 512) (Na*Ns*Nb)
@@ -595,18 +624,41 @@ class DVSA(torch.nn.Module):
         # print('detector_word_feats.norm(dim=2)[:,None]]:{} '.format(detector_word_feats.norm(dim=2)[:,None].size()))
 
         # print('detector_word_feats.norm(dim=2).unsqueeze(2):{} '.format(detector_word_feats.norm(dim=2).unsqueeze(2).size()))
-
+        print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}').format(Na, Ns, maxLen, Na, Ne)
         detector_word_feats = detector_word_feats / (detector_word_feats.norm(dim=2, keepdim=True)+EPS)
         word_feats = word_feats.view(Na, Ne, 512).permute(2, 0, 1) # (512, Na, Ne)
         word_feats = word_feats / (word_feats.norm(dim=0, keepdim= True)+ EPS)
+        print('shape of detector_word_feats: {}').format(detector_word_feats.size())
+        print('shape of word_feats: {}').format(word_feats.size())
 
-        #  Want (Na, Ns*maxlen, Na*Ne)
-        sim_mat = detector_word_feats.mm(word_feats) # (Na, Ns*maxlen, Na, Ne)  <==  (Na*Ns*maxLen, 512)  ( 512,Na*Ne)
+        #  similarity score between words
+        #  sim_mat (Na, Ns, Nd, Na, Ne)
+        sim_mat = detector_word_feats.mm(word_feats) # (Na, Ns*maxlen, Na, Ne)  <==  (Na, Ns*maxLen, 512)  ( 512,Na, Ne)
+        sim_mat = word_feats.view(Na, Ns, maxLen, Na, Ne )# (Na, Ns, Nd, Na, Ne)
+        print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}').format(Na, Ns, maxLen, Na, Ne)
+        print('shape of sim_mat: {}').format(sim_mat.size())
 
-        boxes = boxes.reshape(Na*100, 4)       # Na*100 = Na*Ns*Ne
-
-        DetectBox_ = torch.zeros(len(DetectBox), maxLen, 4)
+        # Getting regression loss
+        # d_ti_n (Na, Ns, Nb, Nd)  
+        boxes = boxes.reshape(Na*100, 4)       # Na*100,4 = Na*Ns*Nb,4 ==> Na, Ns, Nb, 4
+        print('shape of boxes: {}').format(boxes.size())
+        DetectBox_ = torch.zeros(len(DetectBox)*maxLen, 4)   # (Na*Ns * Nd, 4)
+        print('shape of DetectBox_ at init: {}').format(DetectBox_.size())
+        for na in range (len(DetectBox)):
+            for box_ind in range(len(DetectBox[na])):
+                box = DetectBox[na][box_ind]
+                # print('{} is printed in {}'.format(entity,DetectBox_class[na]))
+                DetectBox_[na*maxLen + box_ind] = box
+        print('shape of DetectBox_ filled: {}').format(DetectBox_.size())
         
+        d_ti_n = torch.zeros(Na, Ns, Nb, Nd)    # (Na, Ns, Nb, Nd)  
+        for na in range(Na):
+            for ns in range(Ns):
+                for nb in range(Nb):
+                    for nd in range(Nd):
+                        d_ti_n = self.IOU(boxes[na*Na+ns*Ns+nb], DetectBox_[na*Na+ns*Ns+nd])
+        print('shape of d_ti_n filled: {}').format(d_ti_n.size())
+
 
         # BestBox = torch.index_select(boxes, 0, indarr).view(Na, Ns, Ne, -1) # Na , Ns, Ne, 4 
 
