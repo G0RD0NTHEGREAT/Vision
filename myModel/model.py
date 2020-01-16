@@ -643,8 +643,11 @@ class DVSA(torch.nn.Module):
         # Getting regression loss
         # d_ti_n (Na, Ns, Nb, Nd)  
         boxes = boxes.reshape(Na*100, 4)       # Na*100,4 = Na*Ns*Nb,4 ==> Na, Ns, Nb, 4
+        boxes = boxes.to(sim_mat.device)
+
         print('shape of boxes: {}'.format(boxes.size()))
         DetectBox_ = torch.zeros(len(DetectBox)*maxLen, 4)   # (Na*Ns * Nd, 4)
+        DetectBox_ = DetectBox_.to(sim_mat.device)
         print('shape of DetectBox_ at init: {}'.format(DetectBox_.size()))
         for na in range (len(DetectBox)):       # na (0-Na*Ns)
             for box_ind in range(len(DetectBox[na])):   # box_ind <= Nd 
