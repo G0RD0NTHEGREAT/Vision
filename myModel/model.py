@@ -664,6 +664,8 @@ class DVSA(torch.nn.Module):
                         d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns+ns*Nb+nb], DetectBox_[na*Ns+ns*maxLen+nd])
         print('shape of d_ti_n filled: {}'.format(d_ti_n.size()))
 
+        print('boxes cord: {},\n DetectBox cord: \n{}'.format(boxes[0],DetectBox_[0:maxLen]))
+        print('d_ti_n'.format(d_ti_n[0,0,0,:]))
 
         # BestBox = torch.index_select(boxes, 0, indarr).view(Na, Ns, Ne, -1) # Na , Ns, Ne, 4 
 
