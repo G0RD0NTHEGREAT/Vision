@@ -657,8 +657,8 @@ class DVSA(torch.nn.Module):
         for na in range(Na):
             for ns in range(Ns):
                 for nb in range(Nb):
-                    for nd in range(Nd):
-                        d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns+ns*Nb+nb], DetectBox_[na*Ns+ns*Nd+nd])
+                    for nd in range(maxLen):
+                        d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns+ns*Nb+nb], DetectBox_[na*Ns+ns*maxLen+nd])
         print('shape of d_ti_n filled: {}'.format(d_ti_n.size()))
 
 
