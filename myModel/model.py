@@ -653,7 +653,7 @@ class DVSA(torch.nn.Module):
                 DetectBox_[na*maxLen + box_ind] = torch.FloatTensor(box)
         print('shape of DetectBox_ filled: {}'.format(DetectBox_.size()))
         
-        d_ti_n = torch.zeros(Na, Ns, Nb, Nd)    # (Na, Ns, Nb, Nd)  
+        d_ti_n = torch.zeros(Na, Ns, Nb, maxLen)    # (Na, Ns, Nb, Nd)  
         for na in range(Na):
             for ns in range(Ns):
                 for nb in range(Nb):
