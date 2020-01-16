@@ -635,8 +635,8 @@ class DVSA(torch.nn.Module):
 
         #  similarity score between words
         #  sim_mat (Na, Ns, Nd, Na, Ne)
-        sim_mat = detector_word_feats.mm(word_feats) # (Na, Ns*maxlen, Na, Ne)  <==  (Na, Ns*maxLen, 512)  ( 512,Na, Ne)
-        sim_mat = word_feats.view(Na, Ns, maxLen, Na, Ne )# (Na, Ns, Nd, Na, Ne)
+        sim_mat = detector_word_feats.mm(word_feats) # (Na*Ns*Nd, Na* Ne)  <==  (Na*Ns*Nd, 512)  ( 512,Na*Ne)
+        sim_mat = sim_mat.view(Na, Ns, maxLen, Na, Ne )# (Na, Ns, Nd, Na, Ne)
         print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}'.format(Na, Ns, maxLen, Na, Ne))
         print('shape of sim_mat: {}'.format(sim_mat.size()))
 
