@@ -671,7 +671,7 @@ class DVSA(torch.nn.Module):
         # d_ti_n (Na, Ns, Nb, Nd)  ,  sim_mat (Na, Ns, Nd, Na, Ne)
         # Knowledge_sim (Na,Ns,Nb,Na,Ne)
         sim_mat_ = sim_mat.unsqueeze(dim=2)                 # sim_mat_  (Na, Ns, 1 , Nd, Na, Ne)
-        d_ti_n_ = d_ti_n_.unsqueeze(dim=4).unsqueeze(dim=4) # d_ti_n_   (Na, Ns, Nb, Nd, 1, 1)
+        d_ti_n_ = d_ti_n.unsqueeze(dim=4).unsqueeze(dim=4) # d_ti_n_   (Na, Ns, Nb, Nd, 1, 1)
         
         Knowledge_sim = (sim_mat_ * d_ti_n_).max(dim=3)
         print('Na: {}, Ns: {}, Nb: {}, Na: {}, Ne: {}'.format(Na, Ns, Nb, Na, Ne))
