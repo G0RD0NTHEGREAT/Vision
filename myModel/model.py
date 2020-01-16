@@ -588,7 +588,7 @@ class DVSA(torch.nn.Module):
         maxLen = max([(len(x)) for x in DetectBox_class])
         # Knowledge_sim = np.zeros([len(DetectBox_class), maxLen], dtype=np.float32)
         #Knowledge_sim = torch.zeros(Na,Ns,Ne)
-        Knowledge_sim = torch.zeros(Na,Ns,Nb,Na,Ne)to(device) 
+        Knowledge_sim = torch.zeros(Na,Ns,Nb,Na,Ne).to(device) 
         print('Na is : {}, maxLen is : {}, len(DetectBox) is : {},  len(DetectBox_class) is : {}'.format(Na, maxLen, len(DetectBox), len(DetectBox_class)))
 
         print("getting glove_feats for detector word")
