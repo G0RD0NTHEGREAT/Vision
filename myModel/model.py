@@ -678,9 +678,12 @@ class DVSA(torch.nn.Module):
         d_ti_n_  = d_ti_n_.to(sim_mat.device)
 
         #pdb.set_trace()
+        # Knowledge_sim (Na,Ns,Nb,Na,Ne)
         Knowledge_sim , _= (sim_mat_ * d_ti_n_).max(dim=3)
-        # print('Na: {}, Ns: {}, Nb: {}, Na: {}, Ne: {}'.format(Na, Ns, Nb, Na, Ne))
-        # print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
+        print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
+        Knowledge_sim = Knowledge_sim.view(Na*Ns, Nb, Na*Ne)
+        print('Na: {}, Ns: {}, Nb: {}, Na: {}, Ne: {}'.format(Na, Ns, Nb, Na, Ne))
+        print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
         # BestBox = torch.index_select(boxes, 0, indarr).view(Na, Ns, Ne, -1) # Na , Ns, Ne, 4 
 
         # BestBox (Na , Ns, Ne, 4 (0-223)) 
@@ -792,6 +795,8 @@ class DVSA(torch.nn.Module):
             vis_feats_cls.masked_fill_(S_mask_vis, 0)
             dem = vis_feats_cls.nonzero().shape[0]
             vis_loss = vis_feats_cls.sum()/dem
+
+        # Knowledge_sim (Na,Ns,Nb,Na,Ne)
 
         # S: (NaxNs, Nb, NaxNe)
         # S_: (NaxNsxNb, NaxNe)
