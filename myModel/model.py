@@ -738,7 +738,8 @@ class DVSA(torch.nn.Module):
                     for nd in range(maxLen):
                         d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns*Nb+ns*Nb+nb], DetectBox_[na*Ns*maxLen+ns*maxLen+nd])
                     
-
+                    sum = np.sum(np.abs(d_ti_n_fast[na,ns,nb,:].cpu().numpy() - d_ti_n[na,ns,nb,:].cpu().numpy()))
+                    print(sum)
                     if not np.array_equal(d_ti_n_fast[na,ns,nb,:].cpu().numpy(),d_ti_n[na,ns,nb,:].cpu().numpy()):
                         print("faster")
                         print(d_ti_n_fast[na,ns,nb,:])
