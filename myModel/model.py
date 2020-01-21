@@ -680,7 +680,7 @@ class DVSA(torch.nn.Module):
         #pdb.set_trace()
         # Knowledge_sim (Na,Ns,Nb,Na,Ne)
         Knowledge_sim , _= (sim_mat_ * d_ti_n_).max(dim=3)
-        print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
+        #print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
         Knowledge_sim = Knowledge_sim.view(Na*Ns, Nb, Na*Ne)
         print('Na: {}, Ns: {}, Nb: {}, Na: {}, Ne: {}'.format(Na, Ns, Nb, Na, Ne))
         print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
@@ -796,16 +796,19 @@ class DVSA(torch.nn.Module):
             dem = vis_feats_cls.nonzero().shape[0]
             vis_loss = vis_feats_cls.sum()/dem
 
-        # Knowledge_sim (Na*Ns,Nb,Na*Ne)
-        '''***********************
-        Add knowledge term
-        ***********************'''
-        S = S * Knowledge_sim
+        
 
 
         # S: (NaxNs, Nb, NaxNe)
         # S_: (NaxNsxNb, NaxNe)
         S = S_.view(Na*Ns, Nb, Na*Ne)
+
+        # Knowledge_sim (Na*Ns,Nb,Na*Ne)
+        '''***********************
+        Add knowledge term
+        ***********************'''
+        S = S * Knowledge_sim
+        
         # S_att: (NaxNs, Nb, NaxNe)
         # S: (NaxNs, NaxNe)
         S, _ = S.max(1)
