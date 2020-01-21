@@ -551,21 +551,21 @@ class DVSA(torch.nn.Module):
         width1 = boxA[2]-boxA[0] 
         height1 = boxA[3]-boxA[1] 
 
-        x2 = np.zeros(Nd)
+        x2 = np.zeros(Nd,dtype=np.float32)
         x2 = boxB[:,0] 
-        y2 = np.zeros(Nd)
+        y2 = np.zeros(Nd,dtype=np.float32)
         y2 = boxB[:,1] 
-        width2 = np.zeros(Nd)
+        width2 = np.zeros(Nd,dtype=np.float32)
         width2 = boxB[:,2]-boxB[:,0] 
         height2 = np.zeros(Nd)
         height2 = boxB[:,3]-boxB[:,1] 
         
-        endx = np.zeros(Nd)
+        endx = np.zeros(Nd,dtype=np.float32)
         endx = np.maximum((x1+width1), x2+width2)
         
-        startx = np.zeros(Nd)
+        startx = np.zeros(Nd,dtype=np.float32)
         startx = np.minimum(x1,x2)
-        width = np.zeros(Nd)
+        width = np.zeros(Nd,dtype=np.float32)
         width = width1 + (width2-(endx-startx))
         
 
@@ -573,12 +573,12 @@ class DVSA(torch.nn.Module):
         # startx = min(x1,x2) 
         # width = width1+width2-(endx-startx) 
 
-        endy = np.zeros(Nd)
+        endy = np.zeros(Nd,dtype=np.float32)
         endy = np.maximum(y1+height1,y2+height2)
         
-        starty = np.zeros(Nd)
+        starty = np.zeros(Nd,dtype=np.float32)
         starty = np.minimum(y1,y2)
-        height = np.zeros(Nd)
+        height = np.zeros(Nd,dtype=np.float32)
         height = height2-(endy-starty) 
         height = height + height1
 
@@ -586,23 +586,23 @@ class DVSA(torch.nn.Module):
         # starty = min(y1,y2) 
         # height = height1+height2-(endy-starty) 
 
-        ratio = np.zeros(Nd)
+        ratio = np.zeros(Nd,dtype=np.float32)
         
 
-        Area = np.zeros(Nd)
+        Area = np.zeros(Nd,dtype=np.float32)
 
-        width[width <= 0] = 0
-        height[height <= 0] = 0
+        width[width <= 0] = 0.0
+        height[height <= 0] = 0.0
 
         Area = width * height
 
-        Area1 = np.zeros(Nd)
-        Area2 = np.zeros(Nd)
+        Area1 = np.zeros(Nd,dtype=np.float32)
+        Area2 = np.zeros(Nd,dtype=np.float32)
 
         Area1 = width1*height1 
         Area2 = width2*height2 
 
-        ratio =  Area*1./(Area1+Area2-Area) 
+        ratio =  Area/(Area1+Area2-Area) 
 
         # if width <=0 or height <= 0: 
         #     ratio = 0 # 重叠率为 0  
