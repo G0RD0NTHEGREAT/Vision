@@ -734,18 +734,18 @@ class DVSA(torch.nn.Module):
         for na in range(Na):
             for ns in range(Ns):
                 for nb in range(Nb):
-                    d_ti_n_fast[na,ns,nb,:] = self.IOU_fast(boxes[na*Ns*Nb+ns*Nb+nb].cpu().numpy(), DetectBox_[na*Ns*maxLen+ns*maxLen : na*Ns*maxLen+ns*maxLen + maxLen].cpu().numpy())
-                    for nd in range(maxLen):
-                        d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns*Nb+ns*Nb+nb], DetectBox_[na*Ns*maxLen+ns*maxLen+nd])
+                    d_ti_n[na,ns,nb,:] = self.IOU_fast(boxes[na*Ns*Nb+ns*Nb+nb].cpu().numpy(), DetectBox_[na*Ns*maxLen+ns*maxLen : na*Ns*maxLen+ns*maxLen + maxLen].cpu().numpy())
+                    # for nd in range(maxLen):
+                    #     d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns*Nb+ns*Nb+nb], DetectBox_[na*Ns*maxLen+ns*maxLen+nd])
                     
-                    sum = np.sum(np.abs(d_ti_n_fast[na,ns,nb,:].cpu().numpy() - d_ti_n[na,ns,nb,:].cpu().numpy()))
-                    print(sum)
-                    if not np.array_equal(d_ti_n_fast[na,ns,nb,:].cpu().numpy(),d_ti_n[na,ns,nb,:].cpu().numpy()):
-                        print("faster")
-                        print(d_ti_n_fast[na,ns,nb,:])
-                        print("original")
-                        print(d_ti_n[na,ns,nb,:])
-                        print('Equal : {}'.format(np.array_equal(d_ti_n_fast[na,ns,nb,:].cpu().numpy(),d_ti_n[na,ns,nb,:].cpu().numpy())))
+                    # sum = np.sum(np.abs(d_ti_n_fast[na,ns,nb,:].cpu().numpy() - d_ti_n[na,ns,nb,:].cpu().numpy()))
+                    # print(sum)
+                    # if not np.array_equal(d_ti_n_fast[na,ns,nb,:].cpu().numpy(),d_ti_n[na,ns,nb,:].cpu().numpy()):
+                    #     print("faster")
+                    #     print(d_ti_n_fast[na,ns,nb,:])
+                    #     print("original")
+                    #     print(d_ti_n[na,ns,nb,:])
+                    #     print('Equal : {}'.format(np.array_equal(d_ti_n_fast[na,ns,nb,:].cpu().numpy(),d_ti_n[na,ns,nb,:].cpu().numpy())))
                     
         # print('shape of d_ti_n filled: {}'.format(d_ti_n.size()))
 
