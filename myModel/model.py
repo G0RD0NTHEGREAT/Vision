@@ -601,7 +601,7 @@ class DVSA(torch.nn.Module):
         Area1 = width1*height1 
         Area2 = width2*height2 
 
-        ratio =  Area/(Area1+Area2-Area) 
+        ratio =  Area*1./(Area1+Area2-Area) 
 
         # if width <=0 or height <= 0: 
         #     ratio = 0 # 重叠率为 0  
@@ -733,12 +733,12 @@ class DVSA(torch.nn.Module):
         for na in range(Na):
             for ns in range(Ns):
                 for nb in range(Nb):
-                    d_ti_n[na,ns,nb,:] = self.IOU_fast(boxes[na*Ns*Nb+ns*Nb+nb].cpu().numpy(), DetectBox_[na*Ns*maxLen+ns*maxLen : na*Ns*maxLen+ns*maxLen + maxLen].cpu().numpy())
-                    # for nd in range(maxLen):
-                    #     d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns*Nb+ns*Nb+nb], DetectBox_[na*Ns*maxLen+ns*maxLen+nd])
+                    d_ti_n_fast[na,ns,nb,:] = self.IOU_fast(boxes[na*Ns*Nb+ns*Nb+nb].cpu().numpy(), DetectBox_[na*Ns*maxLen+ns*maxLen : na*Ns*maxLen+ns*maxLen + maxLen].cpu().numpy())
+                    for nd in range(maxLen):
+                        d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns*Nb+ns*Nb+nb], DetectBox_[na*Ns*maxLen+ns*maxLen+nd])
                     
 
-                    # print("faster")
+                    print(np.array_equal(d_ti_n_fast[na,ns,nb,:],d_ti_n[na,ns,nb,:]))
                     # print(d_ti_n_fast[na,ns,nb,:])
                     # print("original")
                     # print(d_ti_n[na,ns,nb,:])
