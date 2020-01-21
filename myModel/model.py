@@ -739,7 +739,7 @@ class DVSA(torch.nn.Module):
                         d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns*Nb+ns*Nb+nb], DetectBox_[na*Ns*maxLen+ns*maxLen+nd])
                     
 
-                    if !np.array_equal(d_ti_n_fast[na,ns,nb,:],d_ti_n[na,ns,nb,:]):
+                    if not np.array_equal(d_ti_n_fast[na,ns,nb,:],d_ti_n[na,ns,nb,:]):
                         print(d_ti_n_fast[na,ns,nb,:])
                         print(d_ti_n[na,ns,nb,:])
                     
