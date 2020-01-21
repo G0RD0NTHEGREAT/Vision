@@ -796,7 +796,12 @@ class DVSA(torch.nn.Module):
             dem = vis_feats_cls.nonzero().shape[0]
             vis_loss = vis_feats_cls.sum()/dem
 
-        # Knowledge_sim (Na,Ns,Nb,Na,Ne)
+        # Knowledge_sim (Na*Ns,Nb,Na*Ne)
+        '''***********************
+        Add knowledge term
+        ***********************'''
+        S = S * Knowledge_sim
+
 
         # S: (NaxNs, Nb, NaxNe)
         # S_: (NaxNsxNb, NaxNe)
