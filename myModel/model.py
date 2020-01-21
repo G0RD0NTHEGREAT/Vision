@@ -566,8 +566,8 @@ class DVSA(torch.nn.Module):
         startx = np.zeros(Nd)
         startx = np.minimum(x1,x2)
         width = np.zeros(Nd)
-        width = width1+(width2-(endx-startx))
-
+        width = (width2-(endx-startx))
+        width = width + width1
         # endx = max(x1+width1,x2+width2) 
         # startx = min(x1,x2) 
         # width = width1+width2-(endx-startx) 
@@ -578,12 +578,12 @@ class DVSA(torch.nn.Module):
         starty = np.zeros(Nd)
         starty = np.minimum(y1,y2)
         height = np.zeros(Nd)
-        height = height1+height2-(endy-starty) 
+        height = height2-(endy-starty) 
+        height = height + height1
 
-
-        endy = max(y1+height1,y2+height2) 
-        starty = min(y1,y2) 
-        height = height1+height2-(endy-starty) 
+        # endy = max(y1+height1,y2+height2) 
+        # starty = min(y1,y2) 
+        # height = height1+height2-(endy-starty) 
 
         ratio = np.zeros(Nd)
         
@@ -733,7 +733,7 @@ class DVSA(torch.nn.Module):
         for na in range(Na):
             for ns in range(Ns):
                 for nb in range(Nb):
-                    d_ti_n_fast[na,ns,nb,:] = self.IOU_fast(boxes[na*Ns*Nb+ns*Nb+nb].numpy(), DetectBox_[na*Ns*maxLen+ns*maxLen : na*Ns*maxLen+ns*maxLen + maxLen].numpy())
+                    d_ti_n_fast[na,ns,nb,:] = self.IOU_fast(boxes[na*Ns*Nb+ns*Nb+nb], DetectBox_[na*Ns*maxLen+ns*maxLen : na*Ns*maxLen+ns*maxLen + maxLen])
                     for nd in range(maxLen):
                         d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns*Nb+ns*Nb+nb], DetectBox_[na*Ns*maxLen+ns*maxLen+nd])
                     
