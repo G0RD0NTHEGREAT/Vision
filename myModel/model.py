@@ -543,6 +543,62 @@ class DVSA(torch.nn.Module):
         # return IOU 
         return ratio
 
+    # def IOU_fast(self, boxA, boxB):
+    #     Nd = len(boxB)
+    #     Knowledge_sim = torch.zeros(Nd).to(device)
+    #     x1 = boxA[0] 
+    #     y1 = boxA[1] 
+    #     width1 = boxA[2]-boxA[0] 
+    #     height1 = boxA[3]-boxA[1] 
+
+    #     x2 = np.array(Nd)
+    #     x2 = boxB[:,0] 
+    #     y2 = np.array(Nd)
+    #     y2 = boxB[:,1] 
+    #     width2 = np.array(Nd)
+    #     width2 = boxB[:,2]-boxB[:,0] 
+    #     height2 = np.array(Nd)
+    #     height2 = boxB[:,3]-boxB[:,1] 
+        
+    #     endx = np.array(Nd)
+    #     endx = np.maximum((x1+width1), x2+width2)
+        
+    #     startx = np.array(Nd)
+    #     startx = np.minimum(x1,x2)
+    #     width = width1+(width2-(endx-startx))
+
+    #     # endx = max(x1+width1,x2+width2) 
+    #     # startx = min(x1,x2) 
+    #     # width = width1+width2-(endx-startx) 
+
+    #     endy = np.array(Nd)
+    #     endy = np.maximum(y1+height1,y2+height2)
+        
+    #     starty = np.array(Nd)
+    #     starty = np.minimum(y1,y2)
+    #     height = height1+height2-(endy-starty) 
+
+
+    #     endy = max(y1+height1,y2+height2) 
+    #     starty = min(y1,y2) 
+    #     height = height1+height2-(endy-starty) 
+
+    #     ratio = np.array(Nd)
+        
+
+    #     Area = np.array(Nd)
+    #     Area = (width <=0 or height <= 0) ? 0 : (width*height)
+
+    #     if width <=0 or height <= 0: 
+    #         ratio = 0 # 重叠率为 0  
+    #     else: 
+    #         Area = width*height # 两矩形相交面积 
+    #         Area1 = width1*height1 
+    #         Area2 = width2*height2 
+    #         ratio = Area*1./(Area1+Area2-Area) 
+    #     # return IOU 
+    #     return ratio
+
     def forward(self,entities,ground_model, glove, boxes, vis_feats, word_feats, entities_length, DetectBox_class, DetectBox_score, DetectBox, args):
         """ Process EM part in video level
         :param: vis_feats (Nax100, 512) (Na*Ns*Nb)
@@ -589,9 +645,9 @@ class DVSA(torch.nn.Module):
         # Knowledge_sim = np.zeros([len(DetectBox_class), maxLen], dtype=np.float32)
         #Knowledge_sim = torch.zeros(Na,Ns,Ne)
         Knowledge_sim = torch.zeros(Na,Ns,Nb,Na,Ne).to(device) 
-        print('Na is : {}, maxLen is : {}, len(DetectBox) is : {},  len(DetectBox_class) is : {}'.format(Na, maxLen, len(DetectBox), len(DetectBox_class)))
+        # print('Na is : {}, maxLen is : {}, len(DetectBox) is : {},  len(DetectBox_class) is : {}'.format(Na, maxLen, len(DetectBox), len(DetectBox_class)))
 
-        print("getting glove_feats for detector word")
+        # print("getting glove_feats for detector word")
 
 
         detector_word_glove = torch.zeros(len(DetectBox_class), maxLen, args.glove_dim)
@@ -624,37 +680,37 @@ class DVSA(torch.nn.Module):
         # print('detector_word_feats.norm(dim=2)[:,None]]:{} '.format(detector_word_feats.norm(dim=2)[:,None].size()))
 
         # print('detector_word_feats.norm(dim=2).unsqueeze(2):{} '.format(detector_word_feats.norm(dim=2).unsqueeze(2).size()))
-        print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}'.format(Na, Ns, maxLen, Na, Ne))
+        # print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}'.format(Na, Ns, maxLen, Na, Ne))
         detector_word_feats = detector_word_feats / (detector_word_feats.norm(dim=1, keepdim=True)+EPS)
          
         #word_feats = word_feats.view(Na, Ne, 512).permute(2, 0, 1) # (512, Na, Ne)
         word_feats = word_feats / (word_feats.norm(dim=1, keepdim= True)+ EPS)
         word_feats = word_feats.permute(1,0) # (512, Na*Ne)
-        print('shape of detector_word_feats: {}'.format(detector_word_feats.size()))
-        print('shape of word_feats: {}'.format(word_feats.size()))
+        # print('shape of detector_word_feats: {}'.format(detector_word_feats.size()))
+        # print('shape of word_feats: {}'.format(word_feats.size()))
 
         #  similarity score between words
         #  sim_mat (Na, Ns, Nd, Na, Ne)
         sim_mat = detector_word_feats.mm(word_feats) # (Na*Ns*Nd, Na* Ne)  <==  (Na*Ns*Nd, 512)  ( 512,Na*Ne)
         sim_mat = sim_mat.view(Na, Ns, maxLen, Na, Ne )# (Na, Ns, Nd, Na, Ne)
-        print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}'.format(Na, Ns, maxLen, Na, Ne))
-        print('shape of sim_mat: {}'.format(sim_mat.size()))
+        # print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}'.format(Na, Ns, maxLen, Na, Ne))
+        # print('shape of sim_mat: {}'.format(sim_mat.size()))
 
         # Getting regression loss
         # d_ti_n (Na, Ns, Nb, Nd)  
         boxes = boxes.reshape(Na*100, 4)       # Na*100,4 = Na*Ns*Nb,4 ==> Na, Ns, Nb, 4
         boxes = boxes.to(sim_mat.device)
 
-        print('shape of boxes: {}'.format(boxes.size()))
+        # print('shape of boxes: {}'.format(boxes.size()))
         DetectBox_ = torch.zeros(len(DetectBox)*maxLen, 4).to(device)   # (Na*Ns * Nd, 4)
         DetectBox_ = DetectBox_.to(sim_mat.device)
-        print('shape of DetectBox_ at init: {}'.format(DetectBox_.size()))
+        # print('shape of DetectBox_ at init: {}'.format(DetectBox_.size()))
         for na in range (len(DetectBox)):       # na (0-Na*Ns)
             for box_ind in range(len(DetectBox[na])):   # box_ind <= Nd 
                 box = DetectBox[na][box_ind]
                 # print('{} is printed in {}'.format(entity,DetectBox_class[na]))
                 DetectBox_[na*maxLen + box_ind] = torch.FloatTensor(box)
-        print('shape of DetectBox_ filled: {}'.format(DetectBox_.size()))
+        # print('shape of DetectBox_ filled: {}'.format(DetectBox_.size()))
         
         d_ti_n = torch.zeros(Na, Ns, Nb, maxLen).to(device)    # (Na, Ns, Nb, Nd)  
         for na in range(Na):
@@ -662,7 +718,7 @@ class DVSA(torch.nn.Module):
                 for nb in range(Nb):
                     for nd in range(maxLen):
                         d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns+ns*Nb+nb], DetectBox_[na*Ns+ns*maxLen+nd])
-        print('shape of d_ti_n filled: {}'.format(d_ti_n.size()))
+        # print('shape of d_ti_n filled: {}'.format(d_ti_n.size()))
 
         # print('boxes cord: {},\n DetectBox cord: \n{}'.format(boxes[0],DetectBox_[0:maxLen]))
         # print('d_ti_n {}'.format(d_ti_n[0,0,0,:]))
@@ -682,8 +738,8 @@ class DVSA(torch.nn.Module):
         Knowledge_sim , _= (sim_mat_ * d_ti_n_).max(dim=3)
         #print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
         Knowledge_sim = Knowledge_sim.view(Na*Ns, Nb, Na*Ne)
-        print('Na: {}, Ns: {}, Nb: {}, Na: {}, Ne: {}'.format(Na, Ns, Nb, Na, Ne))
-        print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
+        # print('Na: {}, Ns: {}, Nb: {}, Na: {}, Ne: {}'.format(Na, Ns, Nb, Na, Ne))
+        # print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
         # BestBox = torch.index_select(boxes, 0, indarr).view(Na, Ns, Ne, -1) # Na , Ns, Ne, 4 
 
         # BestBox (Na , Ns, Ne, 4 (0-223)) 
@@ -808,7 +864,7 @@ class DVSA(torch.nn.Module):
         Add knowledge term
         ***********************'''
         S = S * Knowledge_sim
-        
+
         # S_att: (NaxNs, Nb, NaxNe)
         # S: (NaxNs, NaxNe)
         S, _ = S.max(1)
