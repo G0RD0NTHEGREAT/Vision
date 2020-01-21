@@ -740,8 +740,11 @@ class DVSA(torch.nn.Module):
                     
 
                     if not np.array_equal(d_ti_n_fast[na,ns,nb,:],d_ti_n[na,ns,nb,:]):
+                        print("faster")
                         print(d_ti_n_fast[na,ns,nb,:])
+                        print("original")
                         print(d_ti_n[na,ns,nb,:])
+                        print('Equal : {}'.format(np.array_equal(d_ti_n_fast[na,ns,nb,:],d_ti_n[na,ns,nb,:])))
                     
         # print('shape of d_ti_n filled: {}'.format(d_ti_n.size()))
 
