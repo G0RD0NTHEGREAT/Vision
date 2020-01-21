@@ -566,8 +566,9 @@ class DVSA(torch.nn.Module):
         startx = np.zeros(Nd)
         startx = np.minimum(x1,x2)
         width = np.zeros(Nd)
-        width = (width2-(endx-startx))
-        width = width + width1
+        width = width1 + (width2-(endx-startx))
+        
+
         # endx = max(x1+width1,x2+width2) 
         # startx = min(x1,x2) 
         # width = width1+width2-(endx-startx) 
@@ -738,10 +739,9 @@ class DVSA(torch.nn.Module):
                         d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns*Nb+ns*Nb+nb], DetectBox_[na*Ns*maxLen+ns*maxLen+nd])
                     
 
-                    print(np.array_equal(d_ti_n_fast[na,ns,nb,:],d_ti_n[na,ns,nb,:]))
-                    # print(d_ti_n_fast[na,ns,nb,:])
-                    # print("original")
-                    # print(d_ti_n[na,ns,nb,:])
+                    if !np.array_equal(d_ti_n_fast[na,ns,nb,:],d_ti_n[na,ns,nb,:]):
+                        print(d_ti_n_fast[na,ns,nb,:])
+                        print(d_ti_n[na,ns,nb,:])
                     
         # print('shape of d_ti_n filled: {}'.format(d_ti_n.size()))
 
