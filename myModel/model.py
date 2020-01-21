@@ -543,61 +543,77 @@ class DVSA(torch.nn.Module):
         # return IOU 
         return ratio
 
-    # def IOU_fast(self, boxA, boxB):
-    #     Nd = len(boxB)
-    #     Knowledge_sim = torch.zeros(Nd).to(device)
-    #     x1 = boxA[0] 
-    #     y1 = boxA[1] 
-    #     width1 = boxA[2]-boxA[0] 
-    #     height1 = boxA[3]-boxA[1] 
-
-    #     x2 = np.array(Nd)
-    #     x2 = boxB[:,0] 
-    #     y2 = np.array(Nd)
-    #     y2 = boxB[:,1] 
-    #     width2 = np.array(Nd)
-    #     width2 = boxB[:,2]-boxB[:,0] 
-    #     height2 = np.array(Nd)
-    #     height2 = boxB[:,3]-boxB[:,1] 
+    def IOU_fast(self, boxA, boxB):
+        Nd = len(boxB)
         
-    #     endx = np.array(Nd)
-    #     endx = np.maximum((x1+width1), x2+width2)
+        x1 = boxA[0] 
+        y1 = boxA[1] 
+        width1 = boxA[2]-boxA[0] 
+        height1 = boxA[3]-boxA[1] 
+
+        x2 = np.zeros(Nd)
+        x2 = boxB[:,0] 
+        y2 = np.zeros(Nd)
+        y2 = boxB[:,1] 
+        width2 = np.zeros(Nd)
+        width2 = boxB[:,2]-boxB[:,0] 
+        height2 = np.zeros(Nd)
+        height2 = boxB[:,3]-boxB[:,1] 
         
-    #     startx = np.array(Nd)
-    #     startx = np.minimum(x1,x2)
-    #     width = width1+(width2-(endx-startx))
-
-    #     # endx = max(x1+width1,x2+width2) 
-    #     # startx = min(x1,x2) 
-    #     # width = width1+width2-(endx-startx) 
-
-    #     endy = np.array(Nd)
-    #     endy = np.maximum(y1+height1,y2+height2)
+        endx = np.zeros(Nd)
+        endx = np.maximum((x1+width1), x2+width2)
         
-    #     starty = np.array(Nd)
-    #     starty = np.minimum(y1,y2)
-    #     height = height1+height2-(endy-starty) 
+        startx = np.zeros(Nd)
+        startx = np.minimum(x1,x2)
+        width = np.zeros(Nd)
+        width = width1+(width2-(endx-startx))
+
+        # endx = max(x1+width1,x2+width2) 
+        # startx = min(x1,x2) 
+        # width = width1+width2-(endx-startx) 
+
+        endy = np.zeros(Nd)
+        endy = np.maximum(y1+height1,y2+height2)
+        
+        starty = np.zeros(Nd)
+        starty = np.minimum(y1,y2)
+        height = np.zeros(Nd)
+        height = height1+height2-(endy-starty) 
 
 
-    #     endy = max(y1+height1,y2+height2) 
-    #     starty = min(y1,y2) 
-    #     height = height1+height2-(endy-starty) 
+        endy = max(y1+height1,y2+height2) 
+        starty = min(y1,y2) 
+        height = height1+height2-(endy-starty) 
 
-    #     ratio = np.array(Nd)
+        ratio = np.zeros(Nd)
         
 
-    #     Area = np.array(Nd)
-    #     Area = (width <=0 or height <= 0) ? 0 : (width*height)
+        Area = np.zeros(Nd)
 
-    #     if width <=0 or height <= 0: 
-    #         ratio = 0 # 重叠率为 0  
-    #     else: 
-    #         Area = width*height # 两矩形相交面积 
-    #         Area1 = width1*height1 
-    #         Area2 = width2*height2 
-    #         ratio = Area*1./(Area1+Area2-Area) 
-    #     # return IOU 
-    #     return ratio
+        width[width <= 0] = 0
+        height[height <= 0] = 0
+
+        Area = width * height
+
+        Area1 = np.zeros(Nd)
+        Area2 = np.zeros(Nd)
+
+        Area1 = width1*height1 
+        Area2 = width2*height2 
+
+        ratio =  Area/(Area1+Area2-Area) 
+
+        # if width <=0 or height <= 0: 
+        #     ratio = 0 # 重叠率为 0  
+        # else: 
+        #     Area = width*height # 两矩形相交面积 
+        #     Area1 = width1*height1 
+        #     Area2 = width2*height2 
+        #     ratio = Area*1./(Area1+Area2-Area) 
+
+        # return IOU 
+
+        return torch.from_numpy(ratio)
 
     def forward(self,entities,ground_model, glove, boxes, vis_feats, word_feats, entities_length, DetectBox_class, DetectBox_score, DetectBox, args):
         """ Process EM part in video level
@@ -712,12 +728,21 @@ class DVSA(torch.nn.Module):
                 DetectBox_[na*maxLen + box_ind] = torch.FloatTensor(box)
         # print('shape of DetectBox_ filled: {}'.format(DetectBox_.size()))
         
-        d_ti_n = torch.zeros(Na, Ns, Nb, maxLen).to(device)    # (Na, Ns, Nb, Nd)  
+        d_ti_n = torch.zeros(Na, Ns, Nb, maxLen).to(device)    # (Na, Ns, Nb, Nd) 
+        d_ti_n_fast = torch.zeros(Na, Ns, Nb, maxLen).to(device) 
         for na in range(Na):
             for ns in range(Ns):
                 for nb in range(Nb):
+                    d_ti_n_fast[na,ns,nb,:] = self.IOU_fast(boxes[na*Ns*Nb+ns*Nb+nb], DetectBox_[na*Ns*maxLen+ns*maxLen : na*Ns*maxLen+ns*maxLen + maxLen])
                     for nd in range(maxLen):
-                        d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns+ns*Nb+nb], DetectBox_[na*Ns+ns*maxLen+nd])
+                        d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns*Nb+ns*Nb+nb], DetectBox_[na*Ns*maxLen+ns*maxLen+nd])
+                    
+
+                    print("faster")
+                    print(d_ti_n_fast[na,ns,nb,:])
+                    print("original")
+                    print(d_ti_n[na,ns,nb,:])
+                    
         # print('shape of d_ti_n filled: {}'.format(d_ti_n.size()))
 
         # print('boxes cord: {},\n DetectBox cord: \n{}'.format(boxes[0],DetectBox_[0:maxLen]))
