@@ -602,8 +602,8 @@ class DVSA(torch.nn.Module):
         Area1 = width1*height1 
         Area2 = width2*height2 
 
-        ratio =  Area/(Area1+Area2-Area) 
-
+        ratio =  Area/(Area1+Area2-Area + EPS) 
+        
         # if width <=0 or height <= 0: 
         #     ratio = 0 # 重叠率为 0  
         # else: 
