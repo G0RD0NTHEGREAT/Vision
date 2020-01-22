@@ -616,7 +616,7 @@ class DVSA(torch.nn.Module):
 
         return torch.from_numpy(ratio)
 
-    def forward(self,entities,ground_model, glove, boxes, vis_feats, word_feats, entities_length, DetectBox_class = None, DetectBox_score = None, DetectBox = None, args):
+    def forward(self,entities,ground_model, glove, boxes, vis_feats, word_feats, entities_length, DetectBox_class = None, DetectBox_score = None, DetectBox = None, args = None):
         """ Process EM part in video level
         :param: vis_feats (Nax100, 512) (Na*Ns*Nb)
         :param: boxes (batch(Na), num_boxes(100), 4)
