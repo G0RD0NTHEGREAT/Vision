@@ -650,8 +650,10 @@ class DVSA(torch.nn.Module):
                 S_mask_vis[act_i, :ent_len, i, i] = 1
 
         # S_: (NaxNsxNb, NaxNe)
+        vis_feats = vis_feats / (vis_feats.norm(dim=1, keepdim=True)+EPS)
+        word_feats = word_feats / (word_feats.norm(dim=1, keepdim=True)+EPS)
         S_ = vis_feats @ (word_feats.permute((1, 0)))
-
+        S_ = (S_ + 1)/2 
         # S_mask: (NaxNsxNb, Na*Ne)
         S_.masked_fill_(S_mask, 0)
 
@@ -659,13 +661,7 @@ class DVSA(torch.nn.Module):
             #******************Knowledge Part*************
             # 1. K (knowledge distance from query and class(from Detector))
             maxLen = max([(len(x)) for x in DetectBox_class])
-            # Knowledge_sim = np.zeros([len(DetectBox_class), maxLen], dtype=np.float32)
-            #Knowledge_sim = torch.zeros(Na,Ns,Ne)
             Knowledge_sim = torch.zeros(Na,Ns,Nb,Na,Ne).to(device) 
-            # print('Na is : {}, maxLen is : {}, len(DetectBox) is : {},  len(DetectBox_class) is : {}'.format(Na, maxLen, len(DetectBox), len(DetectBox_class)))
-
-            # print("getting glove_feats for detector word")
-
 
             detector_word_glove = torch.zeros(len(DetectBox_class), maxLen, args.glove_dim)
             detector_word_glove = detector_word_glove.clone()
@@ -709,6 +705,7 @@ class DVSA(torch.nn.Module):
             #  similarity score between words
             #  sim_mat (Na, Ns, Nd, Na, Ne)
             sim_mat = detector_word_feats.mm(word_feats) # (Na*Ns*Nd, Na* Ne)  <==  (Na*Ns*Nd, 512)  ( 512,Na*Ne)
+            sim_mat = (sim_mat + 1) / 2
             sim_mat = sim_mat.view(Na, Ns, maxLen, Na, Ne )# (Na, Ns, Nd, Na, Ne)
             # print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}'.format(Na, Ns, maxLen, Na, Ne))
             # print('shape of sim_mat: {}'.format(sim_mat.size()))
@@ -738,19 +735,6 @@ class DVSA(torch.nn.Module):
                         # for nd in range(maxLen):
                         #     d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns*Nb+ns*Nb+nb], DetectBox_[na*Ns*maxLen+ns*maxLen+nd])
                         
-                        # sum = np.sum(np.abs(d_ti_n_fast[na,ns,nb,:].cpu().numpy() - d_ti_n[na,ns,nb,:].cpu().numpy()))
-                        # print(sum)
-                        # if not np.array_equal(d_ti_n_fast[na,ns,nb,:].cpu().numpy(),d_ti_n[na,ns,nb,:].cpu().numpy()):
-                        #     print("faster")
-                        #     print(d_ti_n_fast[na,ns,nb,:])
-                        #     print("original")
-                        #     print(d_ti_n[na,ns,nb,:])
-                        #     print('Equal : {}'.format(np.array_equal(d_ti_n_fast[na,ns,nb,:].cpu().numpy(),d_ti_n[na,ns,nb,:].cpu().numpy())))
-                        
-            # print('shape of d_ti_n filled: {}'.format(d_ti_n.size()))
-
-            # print('boxes cord: {},\n DetectBox cord: \n{}'.format(boxes[0],DetectBox_[0:maxLen]))
-            # print('d_ti_n {}'.format(d_ti_n[0,0,0,:]))
 
 
             # d_ti_n (Na, Ns, Nb, Nd)  ,  sim_mat (Na, Ns, Nd, Na, Ne)
@@ -765,91 +749,17 @@ class DVSA(torch.nn.Module):
             #pdb.set_trace()
             # Knowledge_sim (Na,Ns,Nb,Na,Ne)
             Knowledge_sim , _= (sim_mat_ * d_ti_n_).max(dim=3)
+
+            Knowledge_sim_mask = tensor.zeros(Na,Ns,Nb,Na,Ne, dtype=torch.float).to(device)
+            for i in range(Na):
+                Knowledge_sim_mask[i,:,:,i,:] = 1
+            
+            Knowledge_sim = Knowledge_sim * Knowledge_sim_mask + ( 1 - Knowledge_sim_mask ) * ( 1 - Knowledge_sim )
             #print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
             Knowledge_sim = Knowledge_sim.view(Na*Ns, Nb, Na*Ne)
-            # print('Na: {}, Ns: {}, Nb: {}, Na: {}, Ne: {}'.format(Na, Ns, Nb, Na, Ne))
-            # print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
-            # BestBox = torch.index_select(boxes, 0, indarr).view(Na, Ns, Ne, -1) # Na , Ns, Ne, 4 
-
-            # BestBox (Na , Ns, Ne, 4 (0-223)) 
-
-            # DetectBox # Na , Ns, Ne, 4 (0, 224)
-
-            # TBD: IOU, 
-
-            # maxSim (Na, Ns, Ne) with index
-
-            # Knowledge_sim
-            # DetectBox (Na*Ns,) 
 
 
-
-
-
-
-
-        # maxSim = torch.zeros(Na, Ns, Ne).to(device)
-        # maxSim = sim_mat.view(Na,Ns,maxLen,Ne).argmax(dim=2)    # (Na, Ns, Ne) with index
-
-        # sim_scr, maxind = sim_mat.view(Na,Ns,maxLen,Ne).max(2)
-
-        # print('sim_scr.size: {}, maxind.size: {}'.format(sim_scr.size(), maxind.size()))
-
-
-        # for a in range(Na):
-        #     entity = entities[a]
-        #     for s in range(Ns):
-        #         for e in range(Ne):
-        #             # print('Na: {}, Ns: {}, Ne: {}'.format(Na,Ns,Ne))
-        #             # #print('max entities_length: {}, entities_length:{}'.format(max(entities_length),entities_length))
-        #             # print('a: {}, s: {}, e: {}'.format(a,s,e))
-        #             # #print('entity length: {}'.format(len(entities)))
-        #             # #print('entity[a]: {}'.format(entities[a]))
-        #             # if e < len(entity):
-        #             #     print('entity is {} entity[e] is: {}'.format(entity, entity[e]))
-        #             # #print('lenth of DetectBox_score is : {}'.format(len(DetectBox_score)))
-        #             # print('length of DetectBox_score[a*Ns+s] is {}'.format(len(DetectBox_score[a*Ns+s])))
-
-        #             # print('index of maxSim[a,s,e] is : {}'.format(maxSim[a,s,e]))
-        #             # print('score of maxSim[a,s,e] is : {}'.format(sim_scr[a,s,e]))
-
-                    
-        #             if maxSim[a,s,e] < len(DetectBox_score[a*Ns+s]) :
-        #                 Detect_score = DetectBox_score[a*Ns+s][maxSim[a,s,e]]   
-        #                 word = DetectBox_class[a*Ns+s][maxSim[a,s,e]]
-        #             else:
-        #                 Detect_score = 0
-        #                 word = "NONE"
-
-        #             if e < len(entity):
-        #                 Word_sim_score = sim_scr[a,s,e]
-        #             else:
-        #                 Word_sim_score = 0
-                    
-        #             # print('Max similarity score for Action {} Frame {} Entity {} is {} * {} = {}'
-        #             #       .format(a,s,e,Detect_score,Word_sim_score, Detect_score*Word_sim_score))
-        #             # if e < len(entity):
-        #             #     print('entity[e]:{}, in entity: {}'.format(entity[e], entity))
-        #             #     print('maxSim word:{}, in all class {}'.format(word,DetectBox_class[a*Ns+s] ))
-
-        #             Knowledge_sim[a,s,e] = Detect_score*Word_sim_score
-        #             #print(Knowledge_sim[a,s,e].item())
-        #             if Knowledge_sim[a,s,e].item() > 0.4:
-        #                 print('score of Knowledge_sim[a,s,e] is : {}'.format(Knowledge_sim[a,s,e].item()))
-        #                 print('score of sim_scr[a,s,e] is : {}'.format(sim_scr[a,s,e]))
-        #                 print('score of Detect_score is : {}'.format(Detect_score))
-        #                 print('entity[e]:{}, in entity: {}'.format(entity[e], entity))
-        #                 print('maxSim word:{}, in all class {}'.format(word,DetectBox_class[a*Ns+s] ))
-
-                
-
-
-        #
-       
-        # for i,j in enumerate(DetectBox_class):
-        #     DetectBox_class_array[i][0:len(j)] = j
-        # 2. 
-
+  
         if self.phase == 'train':
             # S_vis: for visual similarity (Na, Ns, Nb, Ne)
             S_vis_temp = S_.view(Na, Ns, Nb, Na, Ne)
