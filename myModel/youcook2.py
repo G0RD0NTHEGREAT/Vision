@@ -218,56 +218,85 @@ class MPrpDataSet(data.Dataset):
         DetectBox_score = []
         DetectBox = []
 
-
-        for i, img_path in enumerate(image_list):
-            #  read image
-            img = cv2.imread(img_path)
-            img = img.astype(np.float32, copy=True)
-            img -= 127.5
-            # resize image
-            if img.shape[0] != self.args.img_h or img.shape[1] != self.args.img_w:
-                img = cv2.resize(img, (self.args.img_h, self.args.img_w))
-            # append image to ims
-            imgs.append(img)
-            img_paths.append(img_path)
-            
-            # get box info
-            box_path = img_path.split('.')[0] + ".txt"
-            #print("loading ", box_path)
-            DetectBox_path.append(box_path)
-            with open(box_path, 'rb') as handle:
-                info = pickle.load(handle)
-                #print(info)
-                temp_class = []
-                temp_score = []
-                temp_box = []
-                if len(info) > 0:
-                    for eachinfo in info:
-                        temp_class.append(eachinfo[0].lower())
-                        temp_score.append(eachinfo[1])
-                        temp_box.append(eachinfo[2])
+        if self.phase == 'train':
+            for i, img_path in enumerate(image_list):
+                #  read image
+                img = cv2.imread(img_path)
+                img = img.astype(np.float32, copy=True)
+                img -= 127.5
+                # resize image
+                if img.shape[0] != self.args.img_h or img.shape[1] != self.args.img_w:
+                    img = cv2.resize(img, (self.args.img_h, self.args.img_w))
+                # append image to ims
+                imgs.append(img)
+                img_paths.append(img_path)
                 
-                DetectBox_class.append(temp_class)
-                DetectBox_score.append(temp_score)
-                DetectBox.append(temp_box)
+                # get box info
+                box_path = img_path.split('.')[0] + ".txt"
+                #print("loading ", box_path)
+                DetectBox_path.append(box_path)
+                with open(box_path, 'rb') as handle:
+                    info = pickle.load(handle)
+                    #print(info)
+                    temp_class = []
+                    temp_score = []
+                    temp_box = []
+                    if len(info) > 0:
+                        for eachinfo in info:
+                            temp_class.append(eachinfo[0].lower())
+                            temp_score.append(eachinfo[1])
+                            temp_box.append(eachinfo[2])
+                    
+                    DetectBox_class.append(temp_class)
+                    DetectBox_score.append(temp_score)
+                    DetectBox.append(temp_box)
 
 
 
-            # transfer to blob (batch, 3, h, w)
-            # preclude the condition that no entity in such action
-        blob = im_list_to_blob(imgs)
-        # blob = blob.transpose(0, 3, 1, 2)[0]
-        # new video: true if current seg_ind is the last segment in a video, else false
-        new_vid = True if self.seg_accumulate_num[vid_index] + seg_ind in self.seg_accumulate_num else False
-        # get action_length
-        action_length = self.actions_length[vid_index]
-        action_ind = seg_ind
-        # yeild image blob, word entity, image_path and new video flag
+                # transfer to blob (batch, 3, h, w)
+                # preclude the condition that no entity in such action
+            blob = im_list_to_blob(imgs)
+            # blob = blob.transpose(0, 3, 1, 2)[0]
+            # new video: true if current seg_ind is the last segment in a video, else false
+            new_vid = True if self.seg_accumulate_num[vid_index] + seg_ind in self.seg_accumulate_num else False
+            # get action_length
+            action_length = self.actions_length[vid_index]
+            action_ind = seg_ind
+            # yeild image blob, word entity, image_path and new video flag
 
-        if len(self.entity_type) == 2:
-            return blob, entities, sent, img_paths, new_vid, action_length, action_ind, DetectBox_path, DetectBox_class, DetectBox_score, DetectBox
-        elif len(self.entity_type) == 1:
-            return blob, entities, img_paths, new_vid, action_length, action_ind, DetectBox_path, DetectBox_class, DetectBox_score, DetectBox
+            if len(self.entity_type) == 2:
+                return blob, entities, sent, img_paths, new_vid, action_length, action_ind, DetectBox_path, DetectBox_class, DetectBox_score, DetectBox
+            elif len(self.entity_type) == 1:
+                return blob, entities, img_paths, new_vid, action_length, action_ind, DetectBox_path, DetectBox_class, DetectBox_score, DetectBox
+        else:
+            for i, img_path in enumerate(image_list):
+                #  read image
+                img = cv2.imread(img_path)
+                img = img.astype(np.float32, copy=True)
+                img -= 127.5
+                # resize image
+                if img.shape[0] != self.args.img_h or img.shape[1] != self.args.img_w:
+                    img = cv2.resize(img, (self.args.img_h, self.args.img_w))
+                # append image to ims
+                imgs.append(img)
+                img_paths.append(img_path)
+                # transfer to blob (batch, 3, h, w)
+                # preclude the condition that no entity in such action
+            blob = im_list_to_blob(imgs)
+            # blob = blob.transpose(0, 3, 1, 2)[0]
+            # new video: true if current seg_ind is the last segment in a video, else false
+            new_vid = True if self.seg_accumulate_num[vid_index] + seg_ind in self.seg_accumulate_num else False
+            # get action_length
+            action_length = self.actions_length[vid_index]
+            action_ind = seg_ind
+            # yeild image blob, word entity, image_path and new video flag
+
+            if len(self.entity_type) == 2:
+                return blob, entities, sent, img_paths, new_vid, action_length, action_ind
+            elif len(self.entity_type) == 1:
+                return blob, entities, img_paths, new_vid, action_length, action_ind
+
+
 
     def img_id_mapping(self, filename):
         """given file name, get the image id by file name
@@ -325,11 +354,12 @@ class MPrpDataSet(data.Dataset):
                 blob_shape = data[0].shape
                 img_ids.extend([self.img_id_mapping(img_path) for img_path in data[2]])
                 rl_seg_inds.append(data[5])
-
-                DetectBox_path.extend(data[6])
-                DetectBox_class.extend(data[7])
-                DetectBox_score.extend(data[8])
-                DetectBox.extend(data[9])
+                
+                if self.phase == 'train':
+                    DetectBox_path.extend(data[6])
+                    DetectBox_class.extend(data[7])
+                    DetectBox_score.extend(data[8])
+                    DetectBox.extend(data[9])
 
         elif len(self.entity_type) == 2:
             for i, data in enumerate(datas):
@@ -344,22 +374,29 @@ class MPrpDataSet(data.Dataset):
                 img_ids.extend([self.img_id_mapping(img_path) for img_path in data[3]])
                 rl_seg_inds.append(data[6])
 
-                DetectBox_path.extend(data[7])
-                DetectBox_class.extend(data[8])
-                DetectBox_score.extend(data[9])
-                DetectBox.extend(data[10])
+                if self.phase == 'train':
+                    DetectBox_path.extend(data[7])
+                    DetectBox_class.extend(data[8])
+                    DetectBox_score.extend(data[9])
+                    DetectBox.extend(data[10])
             
         frm_length = [len(blob) for blob in blobs]
         blobs = np.concatenate(blobs, 0)
 
         blobs = blobs.reshape(-1, blob_shape[1], blob_shape[2], blob_shape[3])
-        if len(self.entity_type) == 1:
-            #       blob, entities, img_paths, new_vid, action_length, action_ind
-            #       blob, entities, sent, img_paths, new_vid, action_length, action_ind
-            #      blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, img_paths, img_ids
-            return blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, img_paths, img_ids, DetectBox_path, DetectBox_class, DetectBox_score, DetectBox
-        elif len(self.entity_type) == 2:
-            return blobs, entities, sents, entities_length, frm_length, rl_seg_inds, seg_nums, img_paths, img_ids, DetectBox_path, DetectBox_class, DetectBox_score, DetectBox
+        if self.phase == 'train':
+            if len(self.entity_type) == 1:
+                #       blob, entities, img_paths, new_vid, action_length, action_ind
+                #       blob, entities, sent, img_paths, new_vid, action_length, action_ind
+                #      blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, img_paths, img_ids
+                return blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, img_paths, img_ids, DetectBox_path, DetectBox_class, DetectBox_score, DetectBox
+            elif len(self.entity_type) == 2:
+                return blobs, entities, sents, entities_length, frm_length, rl_seg_inds, seg_nums, img_paths, img_ids, DetectBox_path, DetectBox_class, DetectBox_score, DetectBox
+        else:
+            if len(self.entity_type) == 1:
+                return blobs, entities, entities_length, frm_length, rl_seg_inds, seg_nums, img_paths, img_ids
+            elif len(self.entity_type) == 2:
+                return blobs, entities, sents, entities_length, frm_length, rl_seg_inds, seg_nums, img_paths, img_ids
 
     def provide_batch_spl_ind(self, batch_size, shuffle):
         """according batch_size, re-generate the sample index
