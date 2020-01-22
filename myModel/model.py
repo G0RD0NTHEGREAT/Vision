@@ -1458,7 +1458,7 @@ def main():
     for epoch in range(start_epoch, args.epoch):
         if args.phase == 'train':
             # train for one epoch
-            accuracy = validate(val_loader, ground_model, glove, criterion, epoch, args)
+            #accuracy = validate(val_loader, ground_model, glove, criterion, epoch, args)
             train(train_loader, ground_model, glove, criterion, optimizer, epoch, args)
             # adjust learning rate
             adjust_learning_rate(optimizer, epoch, args.lr_decay_gamma, args.lr_decay_step)
