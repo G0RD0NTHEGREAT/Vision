@@ -603,7 +603,7 @@ class DVSA(torch.nn.Module):
         Area2 = width2*height2 
 
         ratio =  Area/(Area1+Area2-Area + EPS) 
-        
+
         # if width <=0 or height <= 0: 
         #     ratio = 0 # 重叠率为 0  
         # else: 
@@ -616,7 +616,7 @@ class DVSA(torch.nn.Module):
 
         return torch.from_numpy(ratio)
 
-    def forward(self,entities,ground_model, glove, boxes, vis_feats, word_feats, entities_length, DetectBox_class, DetectBox_score, DetectBox, args):
+    def forward(self,entities,ground_model, glove, boxes, vis_feats, word_feats, entities_length, DetectBox_class = None, DetectBox_score = None, DetectBox = None, args):
         """ Process EM part in video level
         :param: vis_feats (Nax100, 512) (Na*Ns*Nb)
         :param: boxes (batch(Na), num_boxes(100), 4)
@@ -655,132 +655,132 @@ class DVSA(torch.nn.Module):
         # S_mask: (NaxNsxNb, Na*Ne)
         S_.masked_fill_(S_mask, 0)
 
+        if self.phase == 'train':
+            #******************Knowledge Part*************
+            # 1. K (knowledge distance from query and class(from Detector))
+            maxLen = max([(len(x)) for x in DetectBox_class])
+            # Knowledge_sim = np.zeros([len(DetectBox_class), maxLen], dtype=np.float32)
+            #Knowledge_sim = torch.zeros(Na,Ns,Ne)
+            Knowledge_sim = torch.zeros(Na,Ns,Nb,Na,Ne).to(device) 
+            # print('Na is : {}, maxLen is : {}, len(DetectBox) is : {},  len(DetectBox_class) is : {}'.format(Na, maxLen, len(DetectBox), len(DetectBox_class)))
 
-        #******************Knowledge Part*************
-        # 1. K (knowledge distance from query and class(from Detector))
-        maxLen = max([(len(x)) for x in DetectBox_class])
-        # Knowledge_sim = np.zeros([len(DetectBox_class), maxLen], dtype=np.float32)
-        #Knowledge_sim = torch.zeros(Na,Ns,Ne)
-        Knowledge_sim = torch.zeros(Na,Ns,Nb,Na,Ne).to(device) 
-        # print('Na is : {}, maxLen is : {}, len(DetectBox) is : {},  len(DetectBox_class) is : {}'.format(Na, maxLen, len(DetectBox), len(DetectBox_class)))
-
-        # print("getting glove_feats for detector word")
-
-
-        detector_word_glove = torch.zeros(len(DetectBox_class), maxLen, args.glove_dim)
-        detector_word_glove = detector_word_glove.clone()
-        # entity point
-        ent_p = 0
-
-        for na in range (len(DetectBox_class)):
-            for word_ind in range(len(DetectBox_class[na])):
-                entity = DetectBox_class[na][word_ind]
-                # print('{} is printed in {}'.format(entity,DetectBox_class[na]))
-                if entity in glove.stoi.keys():
-                    detector_word_glove[na][word_ind] = get_word(glove, entity)
-                else:
-                    detector_word_glove[na][word_ind] = torch.zeros(args.glove_dim)
-                    # print('{} is not in glove vocabulary'.format(entity))
-                    # raise Exception('{} is not in glove vocabulary'.format(entity))
-                ent_p += 1
-        # detector_word_glove ( Na*Ns, maxLen, 200)
-        detector_word_glove = detector_word_glove.view(-1, args.glove_dim)
-        detector_word_glove = detector_word_glove.to(device)
-        # detector_word_feats (Na*Ns*maxLen, 512)
-        detector_word_feats = ground_model.word_ebd(detector_word_glove)
-        # word_feats (NaxNe, 512)
-
-        # print('Na: {}, Ns: {}, maxLen{} detector_word_feats:{} '.format(Na, Ns, maxLen, detector_word_feats.size()))
-        # detector_word_feats (Na*Ns*maxLen, 512)
-        #detector_word_feats = detector_word_feats.view(Na, Ns*maxLen, 512)
-        # print('detector_word_feats:{} '.format(detector_word_feats.size()))
-        # print('detector_word_feats.norm(dim=2)[:,None]]:{} '.format(detector_word_feats.norm(dim=2)[:,None].size()))
-
-        # print('detector_word_feats.norm(dim=2).unsqueeze(2):{} '.format(detector_word_feats.norm(dim=2).unsqueeze(2).size()))
-        # print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}'.format(Na, Ns, maxLen, Na, Ne))
-        detector_word_feats = detector_word_feats / (detector_word_feats.norm(dim=1, keepdim=True)+EPS)
-         
-        #word_feats = word_feats.view(Na, Ne, 512).permute(2, 0, 1) # (512, Na, Ne)
-        word_feats = word_feats / (word_feats.norm(dim=1, keepdim= True)+ EPS)
-        word_feats = word_feats.permute(1,0) # (512, Na*Ne)
-        # print('shape of detector_word_feats: {}'.format(detector_word_feats.size()))
-        # print('shape of word_feats: {}'.format(word_feats.size()))
-
-        #  similarity score between words
-        #  sim_mat (Na, Ns, Nd, Na, Ne)
-        sim_mat = detector_word_feats.mm(word_feats) # (Na*Ns*Nd, Na* Ne)  <==  (Na*Ns*Nd, 512)  ( 512,Na*Ne)
-        sim_mat = sim_mat.view(Na, Ns, maxLen, Na, Ne )# (Na, Ns, Nd, Na, Ne)
-        # print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}'.format(Na, Ns, maxLen, Na, Ne))
-        # print('shape of sim_mat: {}'.format(sim_mat.size()))
-
-        # Getting regression loss
-        # d_ti_n (Na, Ns, Nb, Nd)  
-        boxes = boxes.reshape(Na*100, 4)       # Na*100,4 = Na*Ns*Nb,4 ==> Na, Ns, Nb, 4
-        boxes = boxes.to(sim_mat.device)
-
-        # print('shape of boxes: {}'.format(boxes.size()))
-        DetectBox_ = torch.zeros(len(DetectBox)*maxLen, 4).to(device)   # (Na*Ns * Nd, 4)
-        DetectBox_ = DetectBox_.to(sim_mat.device)
-        # print('shape of DetectBox_ at init: {}'.format(DetectBox_.size()))
-        for na in range (len(DetectBox)):       # na (0-Na*Ns)
-            for box_ind in range(len(DetectBox[na])):   # box_ind <= Nd 
-                box = DetectBox[na][box_ind]
-                # print('{} is printed in {}'.format(entity,DetectBox_class[na]))
-                DetectBox_[na*maxLen + box_ind] = torch.FloatTensor(box)
-        # print('shape of DetectBox_ filled: {}'.format(DetectBox_.size()))
-        
-        d_ti_n = torch.zeros(Na, Ns, Nb, maxLen).to(device)    # (Na, Ns, Nb, Nd) 
-        d_ti_n_fast = torch.zeros(Na, Ns, Nb, maxLen).to(device) 
-        for na in range(Na):
-            for ns in range(Ns):
-                for nb in range(Nb):
-                    d_ti_n[na,ns,nb,:] = self.IOU_fast(boxes[na*Ns*Nb+ns*Nb+nb].cpu().numpy(), DetectBox_[na*Ns*maxLen+ns*maxLen : na*Ns*maxLen+ns*maxLen + maxLen].cpu().numpy())
-                    # for nd in range(maxLen):
-                    #     d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns*Nb+ns*Nb+nb], DetectBox_[na*Ns*maxLen+ns*maxLen+nd])
-                    
-                    # sum = np.sum(np.abs(d_ti_n_fast[na,ns,nb,:].cpu().numpy() - d_ti_n[na,ns,nb,:].cpu().numpy()))
-                    # print(sum)
-                    # if not np.array_equal(d_ti_n_fast[na,ns,nb,:].cpu().numpy(),d_ti_n[na,ns,nb,:].cpu().numpy()):
-                    #     print("faster")
-                    #     print(d_ti_n_fast[na,ns,nb,:])
-                    #     print("original")
-                    #     print(d_ti_n[na,ns,nb,:])
-                    #     print('Equal : {}'.format(np.array_equal(d_ti_n_fast[na,ns,nb,:].cpu().numpy(),d_ti_n[na,ns,nb,:].cpu().numpy())))
-                    
-        # print('shape of d_ti_n filled: {}'.format(d_ti_n.size()))
-
-        # print('boxes cord: {},\n DetectBox cord: \n{}'.format(boxes[0],DetectBox_[0:maxLen]))
-        # print('d_ti_n {}'.format(d_ti_n[0,0,0,:]))
+            # print("getting glove_feats for detector word")
 
 
-        # d_ti_n (Na, Ns, Nb, Nd)  ,  sim_mat (Na, Ns, Nd, Na, Ne)
-        # Knowledge_sim (Na,Ns,Nb,Na,Ne)
-        sim_mat_ = torch.zeros(Na, Ns, 1 , maxLen, Na, Ne).to(device)
-        sim_mat_ = sim_mat.unsqueeze(dim=2)                 # sim_mat_  (Na, Ns, 1 , Nd, Na, Ne)
-        d_ti_n_  = torch.zeros(Na, Ns, Nb, maxLen, 1, 1).to(device)
-        d_ti_n_  = d_ti_n.unsqueeze(dim=4).unsqueeze(dim=4) # d_ti_n_   (Na, Ns, Nb, Nd, 1, 1)
-        sim_mat_ = sim_mat_.to(sim_mat.device)
-        d_ti_n_  = d_ti_n_.to(sim_mat.device)
+            detector_word_glove = torch.zeros(len(DetectBox_class), maxLen, args.glove_dim)
+            detector_word_glove = detector_word_glove.clone()
+            # entity point
+            ent_p = 0
 
-        #pdb.set_trace()
-        # Knowledge_sim (Na,Ns,Nb,Na,Ne)
-        Knowledge_sim , _= (sim_mat_ * d_ti_n_).max(dim=3)
-        #print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
-        Knowledge_sim = Knowledge_sim.view(Na*Ns, Nb, Na*Ne)
-        # print('Na: {}, Ns: {}, Nb: {}, Na: {}, Ne: {}'.format(Na, Ns, Nb, Na, Ne))
-        # print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
-        # BestBox = torch.index_select(boxes, 0, indarr).view(Na, Ns, Ne, -1) # Na , Ns, Ne, 4 
+            for na in range (len(DetectBox_class)):
+                for word_ind in range(len(DetectBox_class[na])):
+                    entity = DetectBox_class[na][word_ind]
+                    # print('{} is printed in {}'.format(entity,DetectBox_class[na]))
+                    if entity in glove.stoi.keys():
+                        detector_word_glove[na][word_ind] = get_word(glove, entity)
+                    else:
+                        detector_word_glove[na][word_ind] = torch.zeros(args.glove_dim)
+                        # print('{} is not in glove vocabulary'.format(entity))
+                        # raise Exception('{} is not in glove vocabulary'.format(entity))
+                    ent_p += 1
+            # detector_word_glove ( Na*Ns, maxLen, 200)
+            detector_word_glove = detector_word_glove.view(-1, args.glove_dim)
+            detector_word_glove = detector_word_glove.to(device)
+            # detector_word_feats (Na*Ns*maxLen, 512)
+            detector_word_feats = ground_model.word_ebd(detector_word_glove)
+            # word_feats (NaxNe, 512)
 
-        # BestBox (Na , Ns, Ne, 4 (0-223)) 
+            # print('Na: {}, Ns: {}, maxLen{} detector_word_feats:{} '.format(Na, Ns, maxLen, detector_word_feats.size()))
+            # detector_word_feats (Na*Ns*maxLen, 512)
+            #detector_word_feats = detector_word_feats.view(Na, Ns*maxLen, 512)
+            # print('detector_word_feats:{} '.format(detector_word_feats.size()))
+            # print('detector_word_feats.norm(dim=2)[:,None]]:{} '.format(detector_word_feats.norm(dim=2)[:,None].size()))
 
-        # DetectBox # Na , Ns, Ne, 4 (0, 224)
+            # print('detector_word_feats.norm(dim=2).unsqueeze(2):{} '.format(detector_word_feats.norm(dim=2).unsqueeze(2).size()))
+            # print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}'.format(Na, Ns, maxLen, Na, Ne))
+            detector_word_feats = detector_word_feats / (detector_word_feats.norm(dim=1, keepdim=True)+EPS)
+             
+            #word_feats = word_feats.view(Na, Ne, 512).permute(2, 0, 1) # (512, Na, Ne)
+            word_feats = word_feats / (word_feats.norm(dim=1, keepdim= True)+ EPS)
+            word_feats = word_feats.permute(1,0) # (512, Na*Ne)
+            # print('shape of detector_word_feats: {}'.format(detector_word_feats.size()))
+            # print('shape of word_feats: {}'.format(word_feats.size()))
 
-        # TBD: IOU, 
+            #  similarity score between words
+            #  sim_mat (Na, Ns, Nd, Na, Ne)
+            sim_mat = detector_word_feats.mm(word_feats) # (Na*Ns*Nd, Na* Ne)  <==  (Na*Ns*Nd, 512)  ( 512,Na*Ne)
+            sim_mat = sim_mat.view(Na, Ns, maxLen, Na, Ne )# (Na, Ns, Nd, Na, Ne)
+            # print('Na: {}, Ns: {}, Nd: {}, Na: {}, Ne: {}'.format(Na, Ns, maxLen, Na, Ne))
+            # print('shape of sim_mat: {}'.format(sim_mat.size()))
 
-        # maxSim (Na, Ns, Ne) with index
+            # Getting regression loss
+            # d_ti_n (Na, Ns, Nb, Nd)  
+            boxes = boxes.reshape(Na*100, 4)       # Na*100,4 = Na*Ns*Nb,4 ==> Na, Ns, Nb, 4
+            boxes = boxes.to(sim_mat.device)
 
-        # Knowledge_sim
-        # DetectBox (Na*Ns,) 
+            # print('shape of boxes: {}'.format(boxes.size()))
+            DetectBox_ = torch.zeros(len(DetectBox)*maxLen, 4).to(device)   # (Na*Ns * Nd, 4)
+            DetectBox_ = DetectBox_.to(sim_mat.device)
+            # print('shape of DetectBox_ at init: {}'.format(DetectBox_.size()))
+            for na in range (len(DetectBox)):       # na (0-Na*Ns)
+                for box_ind in range(len(DetectBox[na])):   # box_ind <= Nd 
+                    box = DetectBox[na][box_ind]
+                    # print('{} is printed in {}'.format(entity,DetectBox_class[na]))
+                    DetectBox_[na*maxLen + box_ind] = torch.FloatTensor(box)
+            # print('shape of DetectBox_ filled: {}'.format(DetectBox_.size()))
+            
+            d_ti_n = torch.zeros(Na, Ns, Nb, maxLen).to(device)    # (Na, Ns, Nb, Nd) 
+            d_ti_n_fast = torch.zeros(Na, Ns, Nb, maxLen).to(device) 
+            for na in range(Na):
+                for ns in range(Ns):
+                    for nb in range(Nb):
+                        d_ti_n[na,ns,nb,:] = self.IOU_fast(boxes[na*Ns*Nb+ns*Nb+nb].cpu().numpy(), DetectBox_[na*Ns*maxLen+ns*maxLen : na*Ns*maxLen+ns*maxLen + maxLen].cpu().numpy())
+                        # for nd in range(maxLen):
+                        #     d_ti_n[na,ns,nb,nd] = self.IOU(boxes[na*Ns*Nb+ns*Nb+nb], DetectBox_[na*Ns*maxLen+ns*maxLen+nd])
+                        
+                        # sum = np.sum(np.abs(d_ti_n_fast[na,ns,nb,:].cpu().numpy() - d_ti_n[na,ns,nb,:].cpu().numpy()))
+                        # print(sum)
+                        # if not np.array_equal(d_ti_n_fast[na,ns,nb,:].cpu().numpy(),d_ti_n[na,ns,nb,:].cpu().numpy()):
+                        #     print("faster")
+                        #     print(d_ti_n_fast[na,ns,nb,:])
+                        #     print("original")
+                        #     print(d_ti_n[na,ns,nb,:])
+                        #     print('Equal : {}'.format(np.array_equal(d_ti_n_fast[na,ns,nb,:].cpu().numpy(),d_ti_n[na,ns,nb,:].cpu().numpy())))
+                        
+            # print('shape of d_ti_n filled: {}'.format(d_ti_n.size()))
+
+            # print('boxes cord: {},\n DetectBox cord: \n{}'.format(boxes[0],DetectBox_[0:maxLen]))
+            # print('d_ti_n {}'.format(d_ti_n[0,0,0,:]))
+
+
+            # d_ti_n (Na, Ns, Nb, Nd)  ,  sim_mat (Na, Ns, Nd, Na, Ne)
+            # Knowledge_sim (Na,Ns,Nb,Na,Ne)
+            sim_mat_ = torch.zeros(Na, Ns, 1 , maxLen, Na, Ne).to(device)
+            sim_mat_ = sim_mat.unsqueeze(dim=2)                 # sim_mat_  (Na, Ns, 1 , Nd, Na, Ne)
+            d_ti_n_  = torch.zeros(Na, Ns, Nb, maxLen, 1, 1).to(device)
+            d_ti_n_  = d_ti_n.unsqueeze(dim=4).unsqueeze(dim=4) # d_ti_n_   (Na, Ns, Nb, Nd, 1, 1)
+            sim_mat_ = sim_mat_.to(sim_mat.device)
+            d_ti_n_  = d_ti_n_.to(sim_mat.device)
+
+            #pdb.set_trace()
+            # Knowledge_sim (Na,Ns,Nb,Na,Ne)
+            Knowledge_sim , _= (sim_mat_ * d_ti_n_).max(dim=3)
+            #print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
+            Knowledge_sim = Knowledge_sim.view(Na*Ns, Nb, Na*Ne)
+            # print('Na: {}, Ns: {}, Nb: {}, Na: {}, Ne: {}'.format(Na, Ns, Nb, Na, Ne))
+            # print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
+            # BestBox = torch.index_select(boxes, 0, indarr).view(Na, Ns, Ne, -1) # Na , Ns, Ne, 4 
+
+            # BestBox (Na , Ns, Ne, 4 (0-223)) 
+
+            # DetectBox # Na , Ns, Ne, 4 (0, 224)
+
+            # TBD: IOU, 
+
+            # maxSim (Na, Ns, Ne) with index
+
+            # Knowledge_sim
+            # DetectBox (Na*Ns,) 
 
 
 
@@ -892,7 +892,8 @@ class DVSA(torch.nn.Module):
         '''***********************
         Add knowledge term
         ***********************'''
-        S = S * Knowledge_sim
+        if self.phase == 'train':
+            S = S * Knowledge_sim
 
         # S_att: (NaxNs, Nb, NaxNe)
         # S: (NaxNs, NaxNe)
@@ -1457,6 +1458,7 @@ def main():
     for epoch in range(start_epoch, args.epoch):
         if args.phase == 'train':
             # train for one epoch
+            accuracy = validate(val_loader, ground_model, glove, criterion, epoch, args)
             train(train_loader, ground_model, glove, criterion, optimizer, epoch, args)
             # adjust learning rate
             adjust_learning_rate(optimizer, epoch, args.lr_decay_gamma, args.lr_decay_step)
