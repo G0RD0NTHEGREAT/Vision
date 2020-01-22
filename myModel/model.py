@@ -616,7 +616,7 @@ class DVSA(torch.nn.Module):
 
         return torch.from_numpy(ratio)
 
-    def forward(self,entities,ground_model, glove, boxes, vis_feats, word_feats, entities_length, DetectBox_class = None, DetectBox_score = None, DetectBox = None, args = None):
+    def forward(self, vis_feats, word_feats, entities_length, entities = None, ground_model = None, glove = None, boxes = None, DetectBox_class = None, DetectBox_score = None, DetectBox = None, args = None):
         """ Process EM part in video level
         :param: vis_feats (Nax100, 512) (Na*Ns*Nb)
         :param: boxes (batch(Na), num_boxes(100), 4)
@@ -1117,7 +1117,7 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
         # get visual grounding loss
         # Df_sim (Na*Ns, Na*Ne)
         # Df (Na*Ns, Na*Ne) value scope [0, Nb)
-        D, D_sim, margin_loss = ground_model.DVSA(vid_entities,ground_model, glove, boxes, vis_feats, word_feats, entities_length, DetectBox_class, DetectBox_score, DetectBox, args)
+        D, D_sim, margin_loss = ground_model.DVSA( vis_feats, word_feats, entities_length,vid_entities,ground_model, glove, boxes, DetectBox_class, DetectBox_score, DetectBox, args)
 
         # use L1 loss to minimize the margin loss
         loss = criterion(margin_loss, torch.zeros_like(margin_loss))
@@ -1291,7 +1291,7 @@ def validate(val_loader, ground_model, glove, criterion, epoch, args):
         # get visual grounding loss
         # D_sim (Na*Ns, Na*Ne)
         # D (Na*Ns, Na*Ne) value scope [0, Nb)
-        D, D_sim, margin_loss = ground_model.DVSA(boxes, vis_feats, word_feats, entities_length)
+        D, D_sim, margin_loss = ground_model.DVSA(vis_feats, word_feats, entities_length)
         D, D_sim = v2np(D), v2np(D_sim)
         D, D_sim = postprocess(D, D_sim, Na, Ns, Nb, Ne)
 
