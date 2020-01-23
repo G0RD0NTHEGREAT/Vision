@@ -754,7 +754,7 @@ class DVSA(torch.nn.Module):
             for i in range(Na):
                 Knowledge_sim_mask[i,:,:,i,:] = 1
             
-            Knowledge_sim = Knowledge_sim * Knowledge_sim_mask + ( 1 - Knowledge_sim_mask ) * ( 1 - Knowledge_sim )
+            #Knowledge_sim = Knowledge_sim * Knowledge_sim_mask + ( 1 - Knowledge_sim_mask ) * ( 1 - Knowledge_sim )
             #print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
             Knowledge_sim = Knowledge_sim.view(Na*Ns, Nb, Na*Ne)
 
