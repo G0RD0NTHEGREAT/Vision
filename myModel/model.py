@@ -650,10 +650,10 @@ class DVSA(torch.nn.Module):
                 S_mask_vis[act_i, :ent_len, i, i] = 1
 
         # S_: (NaxNsxNb, NaxNe)
-        #vis_feats = vis_feats / (vis_feats.norm(dim=1, keepdim=True)+EPS)
-        #word_feats = word_feats / (word_feats.norm(dim=1, keepdim=True)+EPS)
+        vis_feats = vis_feats / (vis_feats.norm(dim=1, keepdim=True)+EPS)
+        word_feats = word_feats / (word_feats.norm(dim=1, keepdim=True)+EPS)
         S_ = vis_feats @ (word_feats.permute((1, 0)))
-        #S_ = (S_ + 1)/2 
+        S_ = (S_ + 1)/2 
         # S_mask: (NaxNsxNb, Na*Ne)
         S_.masked_fill_(S_mask, 0)
 
