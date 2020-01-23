@@ -754,7 +754,7 @@ class DVSA(torch.nn.Module):
             for i in range(Na):
                 Knowledge_sim_mask[i,:,:,i,:] = 1
             
-            #Knowledge_sim = Knowledge_sim * Knowledge_sim_mask + ( 1 - Knowledge_sim_mask ) * ( 1 - Knowledge_sim )
+            Knowledge_sim = Knowledge_sim * Knowledge_sim_mask + ( 1 - Knowledge_sim_mask ) * ( 1 - Knowledge_sim )
             #print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
             Knowledge_sim = Knowledge_sim.view(Na*Ns, Nb, Na*Ne)
 
@@ -802,8 +802,8 @@ class DVSA(torch.nn.Module):
         '''***********************
         Add knowledge term
         ***********************'''
-        if self.phase == 'train':
-            S = S * Knowledge_sim
+        #if self.phase == 'train':
+        #    S = S * Knowledge_sim
 
         # S_att: (NaxNs, Nb, NaxNe)
         # S: (NaxNs, NaxNe)
@@ -811,8 +811,10 @@ class DVSA(torch.nn.Module):
         # s_att (Na, Ns, NaxNe)
         S = S.view(Na, Ns, Na*Ne)
         # with torch.no_grad():
-        S_att = (S - S.min(1, True)[0]) / (S.max(1, True)[0] - S.min(1, True)[0] + EPS)
-        S = S*S_att
+        
+        #S_att = (S - S.min(1, True)[0]) / (S.max(1, True)[0] - S.min(1, True)[0] + EPS)
+        
+        #S = S*S_att
         # average on entities in each action
         Sf = S.view(Na, Ns, Na, Ne).sum(-1)
         # Sf: (Na, Ns, Na)
@@ -830,7 +832,8 @@ class DVSA(torch.nn.Module):
         frame_score = F.relu(Sf - Sf_diag.permute(2, 1, 0) + self.args.Delta).mean(0).permute(1, 0) + F.relu(Sf - Sf_diag + self.args.Delta).mean(2)
 
         # rank loss
-        margin_loss = (frame_score.mean() + self.args.vis_lam*vis_loss)*10 if self.phase == 'train' else frame_score.mean()*10
+        #margin_loss = (frame_score.mean() + self.args.vis_lam*vis_loss)*10 if self.phase == 'train' else frame_score.mean()*10
+        margin_loss = (frame_score.mean() )*10 if self.phase == 'train' else frame_score.mean()*10
 
         # grounding and only ground the current segment
         # S_sim: (NaxNs, Nb, NaxNe)
