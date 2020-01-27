@@ -804,8 +804,8 @@ class DVSA(torch.nn.Module):
         '''***********************
         Add knowledge term
         ***********************'''
-        #if self.phase == 'train':
-        #    S = S * Knowledge_sim
+        if self.phase == 'train':
+            S = S * Knowledge_sim
 
         # S_att: (NaxNs, Nb, NaxNe)
         # S: (NaxNs, NaxNe)
