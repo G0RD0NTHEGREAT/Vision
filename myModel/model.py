@@ -344,7 +344,7 @@ def visualize_grounding(D, D_prob, boxes, imgs, word_entities, im_paths, Ns=1, g
             os.makedirs(save_path.rsplit('/', 1)[0])
         cv2.imwrite(save_path, im2show)
         print ('save_path {}'.format(save_path))
-
+    return imgs
 
 def visualize_single_grounding(D, D_prob, boxes, imgs, word_entities, im_paths):
     """ Visualize grouding boxes without other proposals
@@ -759,7 +759,7 @@ class DVSA(torch.nn.Module):
                 Knowledge_sim_mask[i,:,:,i,:] = 1
             
             # Knowledge_sim = Knowledge_sim * Knowledge_sim_mask + ( 1 - Knowledge_sim_mask ) * ( 1 - Knowledge_sim )
-            Knowledge_sim = Knowledge_sim * Knowledge_sim_mask + （1 - Knowledge_sim_mask) / 8
+            Knowledge_sim = Knowledge_sim * Knowledge_sim_mask + (1 - Knowledge_sim_mask) / 8
 
             #print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
             Knowledge_sim = Knowledge_sim.view(Na*Ns, Nb, Na*Ne)
@@ -1064,9 +1064,9 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
             D = D.reshape(-1, Ne)
             out_imgs = []
             out_imgs = visualize_grounding(D, D_sim, vis_boxes, vid_ims, vid_entities, vid_im_paths)
-
+            writer.add_image('imresult', out_imgs, epoch)
     writer.add_scalar('loss', running_loss/(batch_ind + 1), epoch)
-    writer.add_image('imresult', out_imgs, epoch)
+    
 
 
 def validate(val_loader, ground_model, glove, criterion, epoch, args):
