@@ -1062,9 +1062,9 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
             # D (Na*Ns, Ne) value scope [0, Nb)
             D_sim = D_sim.reshape(-1, Ne)
             D = D.reshape(-1, Ne)
-            out_imgs = []
+            
             out_imgs = visualize_grounding(D, D_sim, vis_boxes, vid_ims, vid_entities, vid_im_paths)
-            writer.add_image('imresult', out_imgs, epoch)
+            writer.add_image('imresult', out_imgs.permute(0,3,1,2), epoch)
     writer.add_scalar('loss', running_loss/(batch_ind + 1), epoch)
     
 
