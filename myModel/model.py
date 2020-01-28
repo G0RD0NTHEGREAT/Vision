@@ -421,6 +421,7 @@ def visualize_single_grounding(D, D_prob, boxes, imgs, word_entities, im_paths):
             os.makedirs(save_path.rsplit('/', 1)[0])
         cv2.imwrite(save_path, im2show)
         print ('save_path {}'.format(save_path))
+    return out_imgs
 
 ## Word Related Functions
 def get_word(glove, word):
@@ -741,8 +742,10 @@ class DVSA(torch.nn.Module):
             # Knowledge_sim (Na,Ns,Nb,Na,Ne)
             sim_mat_ = torch.zeros(Na, Ns, 1 , maxLen, Na, Ne).to(device)
             sim_mat_ = sim_mat.unsqueeze(dim=2)                 # sim_mat_  (Na, Ns, 1 , Nd, Na, Ne)
+
             d_ti_n_  = torch.zeros(Na, Ns, Nb, maxLen, 1, 1).to(device)
             d_ti_n_  = d_ti_n.unsqueeze(dim=4).unsqueeze(dim=4) # d_ti_n_   (Na, Ns, Nb, Nd, 1, 1)
+
             sim_mat_ = sim_mat_.to(sim_mat.device)
             d_ti_n_  = d_ti_n_.to(sim_mat.device)
 
@@ -756,7 +759,7 @@ class DVSA(torch.nn.Module):
                 Knowledge_sim_mask[i,:,:,i,:] = 1
             
             # Knowledge_sim = Knowledge_sim * Knowledge_sim_mask + ( 1 - Knowledge_sim_mask ) * ( 1 - Knowledge_sim )
-            Knowledge_sim = Knowledge_sim * Knowledge_sim_mask + （1 - Knowledge_sim_mask）
+            Knowledge_sim = Knowledge_sim * Knowledge_sim_mask + （1 - Knowledge_sim_mask) / 8
 
             #print('shape of Knowledge_sim: {}'.format(Knowledge_sim.size()))
             Knowledge_sim = Knowledge_sim.view(Na*Ns, Nb, Na*Ne)
@@ -1059,10 +1062,11 @@ def train(train_loader, ground_model, glove, criterion, optimizer, epoch, args):
             # D (Na*Ns, Ne) value scope [0, Nb)
             D_sim = D_sim.reshape(-1, Ne)
             D = D.reshape(-1, Ne)
-            visualize_grounding(D, D_sim, vis_boxes, vid_ims, vid_entities, vid_im_paths)
+            out_imgs = []
+            out_imgs = visualize_grounding(D, D_sim, vis_boxes, vid_ims, vid_entities, vid_im_paths)
 
     writer.add_scalar('loss', running_loss/(batch_ind + 1), epoch)
-
+    writer.add_image('imresult', out_imgs, epoch)
 
 
 def validate(val_loader, ground_model, glove, criterion, epoch, args):
@@ -1234,7 +1238,8 @@ def validate(val_loader, ground_model, glove, criterion, epoch, args):
             vis_boxes = vis_boxes.reshape(-1, Ns, cfg.TEST.RPN_POST_NMS_TOP_N, 4)
             D_sim = D_sim.reshape(-1, Ne)
             D = D.reshape(-1, Ne)
-            visualize_single_grounding(D, D_sim, vis_boxes, vid_ims, vid_entities, vid_im_paths)
+            out_imgs = []
+            out_imgs = visualize_single_grounding(D, D_sim, vis_boxes, vid_ims, vid_entities, vid_im_paths)
 
     # generate det
     dets = [img_inds, obj_labels, obj_bboxes, obj_confs]
